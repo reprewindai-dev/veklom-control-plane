@@ -17,11 +17,21 @@ type PanelTab = "library" | "inspector" | "templates" | "runs";
 type NodeConfig = {
   provider?: string;
   model?: string;
+  model_provider?: string;
+  model_name?: string;
+  system_prompt?: string;
+  tools_allowed?: string[];
+  blocked_tools?: string[];
+  max_iterations?: number;
+  timeout_seconds?: number;
+  temperature?: number;
+  text?: string;
   policy?: string;
   maxLatencyMs?: number;
   monthlyCapUsd?: number;
   requireEvidence?: boolean;
   redactPii?: boolean;
+  redact_pii?: boolean;
   outputSchema?: string;
 };
 
@@ -30,7 +40,7 @@ const LANGCHAIN_CAT = {
   id: "langchain",
   label: "LangChain",
   nodes: [
-    { id: "lc-agent", name: "LangChain Agent", description: "ReAct tool-calling agent" },
+    { id: "langchain_agent", name: "LangChain Agent", description: "ReAct tool-calling agent" },
     { id: "lc-langgraph", name: "LangGraph", description: "Stateful multi-step graph" },
     { id: "lc-memory", name: "Conversation Memory", description: "Buffer / summary memory" },
     { id: "lc-retrievalqa", name: "RetrievalQA Chain", description: "RAG question-answering" },
@@ -107,7 +117,7 @@ export default function PipelinesPage() {
       ...c,
       nodes: [...(c.nodes || []), ...(EXTRA[c.id] || [])],
     }));
-    return [...base, LANGCHAIN_CAT];
+    return base.some((c: any) => c.id === "langchain") ? base : [...base, LANGCHAIN_CAT];
   }, [palette.data]);
 
   // Default selection
@@ -470,6 +480,20 @@ export default function PipelinesPage() {
 }
 
 function defaultNodeConfig(catId: string, nodeType: string): NodeConfig {
+  if (nodeType === "langchain_agent" || nodeType === "lc-agent") return {
+    model_provider: "ollama",
+    model_name: "qwen2.5:3b",
+    system_prompt: "You are a governed Veklom ReAct agent. Use approved tools only and return enterprise-ready output.",
+    tools_allowed: ["marketplace_tool"],
+    blocked_tools: ["code_executor"],
+    max_iterations: 3,
+    timeout_seconds: 45,
+    temperature: 0.2,
+    policy: "sovereign_default",
+    requireEvidence: true,
+    redact_pii: true,
+    redactPii: true,
+  };
   if (catId === "models" || nodeType.startsWith("llm-")) return { provider: nodeType.replace("llm-", ""), model: nodeType, policy: "cost_quality_balanced", maxLatencyMs: 1200, monthlyCapUsd: 2500, requireEvidence: true };
   if (catId === "routing" || nodeType.includes("policy")) return { policy: "sovereign_default", requireEvidence: true, redactPii: true, maxLatencyMs: 300 };
   if (catId === "output") return { outputSchema: "signed_json", requireEvidence: true, redactPii: nodeType.includes("pii") };
@@ -478,8 +502,8 @@ function defaultNodeConfig(catId: string, nodeType: string): NodeConfig {
 }
 
 function inferPrimaryModel(nodes: PNode[], configs: Record<string, NodeConfig>) {
-  const modelNode = nodes.find((n) => n.cat === "models" || n.nodeType.startsWith("llm-"));
-  return (modelNode && (configs[modelNode.id]?.model || modelNode.nodeType)) || "policy-routed";
+  const modelNode = nodes.find((n) => n.cat === "models" || n.cat === "langchain" || n.nodeType.startsWith("llm-"));
+  return (modelNode && (configs[modelNode.id]?.model_name || configs[modelNode.id]?.model || modelNode.nodeType)) || "policy-routed";
 }
 
 function pipelineReadiness(nodes: PNode[], edges: PEdge[], billing: any) {
@@ -531,6 +555,18 @@ function ReadinessPanel({ readiness }: { readiness: { label: string; pass: boole
 }
 
 function NodeInspector({ node, config, onChange }: { node: PNode; config: NodeConfig; onChange: (patch: NodeConfig) => void }) {
+  const isLangChainAgent = node.nodeType === "langchain_agent" || node.nodeType === "lc-agent";
+  const allowedTools = config.tools_allowed || [];
+  const blockedTools = config.blocked_tools || [];
+  const toggleTool = (tool: string) => {
+    const next = allowedTools.includes(tool) ? allowedTools.filter((t) => t !== tool) : [...allowedTools, tool];
+    onChange({ tools_allowed: next });
+  };
+  const toggleBlockedTool = (tool: string) => {
+    const next = blockedTools.includes(tool) ? blockedTools.filter((t) => t !== tool) : [...blockedTools, tool];
+    onChange({ blocked_tools: next });
+  };
+
   return (
     <div className="rounded-lg border border-border bg-white/[0.02] p-3">
       <div className="flex items-center gap-2 mb-3">
@@ -559,8 +595,59 @@ function NodeInspector({ node, config, onChange }: { node: PNode; config: NodeCo
           </Control>
         </div>
         <Control label="Model / endpoint">
-          <input className="input h-8 text-xs" value={config.model || ""} onChange={(e) => onChange({ model: e.target.value })} placeholder="policy-routed" />
+          <input className="input h-8 text-xs" value={isLangChainAgent ? (config.model_name || "") : (config.model || "")} onChange={(e) => onChange(isLangChainAgent ? { model_name: e.target.value } : { model: e.target.value })} placeholder={isLangChainAgent ? "qwen2.5:3b" : "policy-routed"} />
         </Control>
+        {isLangChainAgent && (
+          <>
+            <div className="grid grid-cols-2 gap-2">
+              <Control label="Provider">
+                <select className="input h-8 text-xs" value={config.model_provider || "ollama"} onChange={(e) => onChange({ model_provider: e.target.value })}>
+                  <option className="bg-bg-800" value="ollama">Ollama</option>
+                  <option className="bg-bg-800" value="openai">OpenAI</option>
+                  <option className="bg-bg-800" value="gemini">Gemini</option>
+                  <option className="bg-bg-800" value="groq">Groq</option>
+                  <option className="bg-bg-800" value="huggingface">Hugging Face</option>
+                </select>
+              </Control>
+              <Control label="Temperature">
+                <input className="input h-8 text-xs" type="number" step="0.1" min="0" max="2" value={config.temperature ?? 0.2} onChange={(e) => onChange({ temperature: Number(e.target.value) })} />
+              </Control>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Control label="Max steps">
+                <input className="input h-8 text-xs" type="number" min="1" max="8" value={config.max_iterations || 3} onChange={(e) => onChange({ max_iterations: Number(e.target.value) || 3 })} />
+              </Control>
+              <Control label="Timeout">
+                <input className="input h-8 text-xs" type="number" min="5" max="180" value={config.timeout_seconds || 45} onChange={(e) => onChange({ timeout_seconds: Number(e.target.value) || 45 })} />
+              </Control>
+            </div>
+            <Control label="System prompt">
+              <textarea className="input min-h-20 py-2 text-xs resize-none" value={config.system_prompt || ""} onChange={(e) => onChange({ system_prompt: e.target.value })} placeholder="Governed ReAct instructions" />
+            </Control>
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-ink-600">Allowed tools</span>
+              <div className="grid grid-cols-2 gap-1.5 mt-1">
+                {["web_search", "http_request", "sql_query", "file_reader", "marketplace_tool", "code_executor"].map((tool) => (
+                  <label key={tool} className="flex items-center gap-2 rounded-md border border-border bg-bg-900 px-2 py-1.5 text-[10px] text-ink-300">
+                    <input type="checkbox" checked={allowedTools.includes(tool)} onChange={() => toggleTool(tool)} />
+                    <span className="truncate">{tool}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-ink-600">Blocked tools</span>
+              <div className="grid grid-cols-2 gap-1.5 mt-1">
+                {["web_search", "http_request", "sql_query", "file_reader", "marketplace_tool", "code_executor"].map((tool) => (
+                  <label key={tool} className="flex items-center gap-2 rounded-md border border-border bg-bg-900 px-2 py-1.5 text-[10px] text-ink-300">
+                    <input type="checkbox" checked={blockedTools.includes(tool)} onChange={() => toggleBlockedTool(tool)} />
+                    <span className="truncate">{tool}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
         <Control label="Output schema">
           <input className="input h-8 text-xs" value={config.outputSchema || ""} onChange={(e) => onChange({ outputSchema: e.target.value })} placeholder="signed_json" />
         </Control>
@@ -570,7 +657,7 @@ function NodeInspector({ node, config, onChange }: { node: PNode; config: NodeCo
         </label>
         <label className="flex items-center justify-between gap-3 rounded-md border border-border bg-bg-900 px-2 py-1.5 text-[11px] text-ink-300">
           PII redaction
-          <input type="checkbox" checked={!!config.redactPii} onChange={(e) => onChange({ redactPii: e.target.checked })} />
+          <input type="checkbox" checked={!!(config.redactPii || config.redact_pii)} onChange={(e) => onChange({ redactPii: e.target.checked, redact_pii: e.target.checked })} />
         </label>
       </div>
     </div>
