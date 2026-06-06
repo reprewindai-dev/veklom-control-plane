@@ -43,6 +43,7 @@ export default function PipelineCanvas({
   selected,
   setSelected,
   running,
+  onDelete,
 }: {
   nodes: PNode[];
   edges: PEdge[];
@@ -51,6 +52,7 @@ export default function PipelineCanvas({
   selected: string | null;
   setSelected: (id: string | null) => void;
   running: boolean;
+  onDelete?: (id: string) => void;
 }) {
   const boardRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ id: string; offX: number; offY: number } | null>(null);
@@ -196,6 +198,7 @@ export default function PipelineCanvas({
                   onClick={() => {
                     setNodes((ns) => ns.filter((x) => x.id !== n.id));
                     setEdges((es) => es.filter((e) => e.source !== n.id && e.target !== n.id));
+                    onDelete?.(n.id);
                     setSelected(null);
                   }}
                   className="absolute -top-2 -right-2 w-5 h-5 grid place-items-center rounded-full bg-accent-red/90 text-white hover:bg-accent-red"

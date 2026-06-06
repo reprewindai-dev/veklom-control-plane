@@ -63,6 +63,10 @@ function buildUrl(path: string, query?: RequestOpts["query"]): string {
   return url.toString();
 }
 
+export function apiUrl(path: string, query?: RequestOpts["query"]): string {
+  return buildUrl(path, query);
+}
+
 export async function api<T>(path: string, opts: RequestOpts = {}): Promise<T> {
   const headers: Record<string, string> = {
     "Accept": "application/json",
