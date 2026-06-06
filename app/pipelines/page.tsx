@@ -294,7 +294,7 @@ export default function PipelinesPage() {
     if (created?.id) setPid(created.id);
   }
 
-  async function useTemplate(templateId: string) {
+  async function applyTemplate(templateId: string) {
     const pipe = await api<any>(`/api/v1/pipelines/${templateId}`);
     await pipelines.mutate();
     if (pipe?.id) setPid(pipe.id);
@@ -494,7 +494,7 @@ export default function PipelinesPage() {
               <div className="space-y-2 max-h-[520px] overflow-y-auto scroll-thin pr-1">
                 {templates.isLoading ? <Skeleton className="h-40 w-full" /> :
                   unwrapList<any>(templates.data?.templates || templates.data).map((t) => (
-                    <button key={t.id} onClick={() => useTemplate(t.id)}
+                    <button key={t.id} onClick={() => applyTemplate(t.id)}
                       className="w-full rounded-lg border border-border bg-white/[0.02] hover:border-brand-500/50 hover:bg-brand-500/10 px-3 py-2 text-left transition">
                       <div className="flex items-center gap-2">
                         <span className="text-[12px] font-semibold text-ink-50 truncate">{t.name}</span>

@@ -156,7 +156,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex">
       {/* Sidebar */}
-      <aside className="w-[248px] shrink-0 border-r border-border bg-bg-900/80 backdrop-blur px-3 py-4 flex flex-col">
+      <aside className="hidden lg:flex w-[248px] shrink-0 border-r border-border bg-bg-900/80 backdrop-blur px-3 py-4 flex-col">
         <Link href="/dashboard" className="flex items-start gap-2.5 px-2 py-1.5 mb-4">
           <LogoWordmark height={22} className="mt-0.5" />
           <span className="text-[8px] leading-[1.3] text-ink-600 uppercase tracking-[0.16em] font-semibold mt-0.5">
@@ -226,7 +226,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 w-full">
         <header className="sticky top-0 z-20 h-14 border-b border-border glass flex items-center px-4 gap-3">
           {/* Env chips */}
           <div className="hidden md:flex items-center gap-1.5">

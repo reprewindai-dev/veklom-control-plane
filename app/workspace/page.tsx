@@ -25,7 +25,7 @@ export default function WorkspacePage() {
           <Card className="lg:col-span-2">
             <div className="text-sm font-medium mb-3">Sovereign Governance Vertical</div>
             <p className="text-xs text-ink-400 mb-4">
-              Select your organization's industry vertical to automatically load optimized governance policy packs, risk tiers, and compliance schemas.
+              Select your organization&apos;s industry vertical to automatically load optimized governance policy packs, risk tiers, and compliance schemas.
             </p>
             {overview.isLoading ? <Skeleton className="h-28 w-full" /> :
               <div className="grid grid-cols-1 md:grid-cols-5 gap-3">

@@ -90,7 +90,7 @@ export default function AutonomousPage() {
           </SectionCard>
 
           <SectionCard label="Training" title="Retrain predictors" className="lg:col-span-1">
-            <p className="text-[12.5px] text-ink-400 mb-3">Train the cost, routing, and quality models on this workspace's execution history.</p>
+            <p className="text-[12.5px] text-ink-400 mb-3">Train the cost, routing, and quality models on this workspace&apos;s execution history.</p>
             <Button onClick={train} loading={training} className="w-full"><GraduationCap size={14} /> Train models</Button>
             {trainRes && (
               <div className={`mt-3 card p-3 ${trainRes.success ? "" : "border-accent-red/30"}`}>

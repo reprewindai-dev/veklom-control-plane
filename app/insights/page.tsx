@@ -86,7 +86,7 @@ export default function InsightsPage() {
         <div className="grid lg:grid-cols-2 gap-4">
           <SectionCard label="Recommendations" title="Suggested optimizations" bodyClassName="space-y-2">
             {suggestions.isLoading ? <Skeleton className="h-24" /> : sug.length === 0 ? (
-              <div className="text-ink-500 text-[13px]">No suggestions right now — you're well optimized.</div>
+              <div className="text-ink-500 text-[13px]">No suggestions right now - you&apos;re well optimized.</div>
             ) : sug.map((g) => (
               <div key={g.id} className="flex items-center gap-3 card p-3">
                 <Sparkles size={15} className="text-brand-400 shrink-0" />
