@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { api, API_BASE, clearTokens, getToken, setTokens } from "./api";
+import { api, apiUrl, clearTokens, getToken, setTokens } from "./api";
 import { normalizeTier, Tier } from "./tiers";
 import type { Me, Subscription } from "@/types/api";
 
@@ -85,8 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (typeof window === "undefined") return;
     // Land back on the control plane dashboard after the OAuth round-trip.
     const next = `${BASE_PATH}/dashboard/`;
-    const start = `${API_BASE}/api/v1/auth/github/login?next=${encodeURIComponent(next)}`;
-    window.location.href = start;
+    window.location.href = apiUrl("/api/v1/auth/github/login", { next });
   }, []);
 
   const logout = useCallback(() => {

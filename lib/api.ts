@@ -50,9 +50,17 @@ export interface RequestOpts {
   signal?: AbortSignal;
 }
 
+export function apiBaseUrl(): string {
+  if (API_BASE) return API_BASE;
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+  return "";
+}
+
 function buildUrl(path: string, query?: RequestOpts["query"]): string {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const base = API_BASE || origin;
+  const base = apiBaseUrl() || origin;
   const url = new URL(path.startsWith("http") ? path : `${base}${path}`);
   if (query) {
     for (const [k, v] of Object.entries(query)) {
