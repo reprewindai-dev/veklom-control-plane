@@ -26,6 +26,10 @@ type NodeConfig = {
   timeout_seconds?: number;
   temperature?: number;
   text?: string;
+  url?: string;
+  method?: string;
+  query?: string;
+  body?: string;
   policy?: string;
   maxLatencyMs?: number;
   monthlyCapUsd?: number;
@@ -41,25 +45,13 @@ const LANGCHAIN_CAT = {
   label: "LangChain",
   nodes: [
     { id: "langchain_agent", name: "LangChain Agent", description: "ReAct tool-calling agent" },
-    { id: "lc-langgraph", name: "LangGraph", description: "Stateful multi-step graph" },
-    { id: "lc-memory", name: "Conversation Memory", description: "Buffer / summary memory" },
-    { id: "lc-retrievalqa", name: "RetrievalQA Chain", description: "RAG question-answering" },
     { id: "lc-parser", name: "Output Parser", description: "Structured Pydantic parsing" },
-    { id: "lc-toolnode", name: "Tool Node", description: "Bind marketplace tools" },
   ],
 };
 
-// Extra nodes to match the governed-inference reference palette.
+// The backend node catalog is the execution contract. Keep local extras empty
+// unless a matching backend adapter exists.
 const EXTRA: Record<string, { id: string; name: string; description: string }[]> = {
-  retrieval: [
-    { id: "weaviate", name: "Weaviate Store", description: "Weaviate vector DB" },
-    { id: "doc-loader", name: "Document Loader", description: "Ingest PDFs, docs, URLs" },
-  ],
-  routing: [{ id: "semantic-router", name: "Semantic Router", description: "Embed + route by intent" }],
-  output: [
-    { id: "markdown-render", name: "Markdown Render", description: "Render output as Markdown" },
-    { id: "audit-signer", name: "Audit Signer", description: "HMAC-sign the evidence record" },
-  ],
 };
 
 function catOf(nodeType: string, type: string | undefined, lookup: Record<string, string>): string {
@@ -480,6 +472,8 @@ export default function PipelinesPage() {
 }
 
 function defaultNodeConfig(catId: string, nodeType: string): NodeConfig {
+  if (nodeType === "input") return { text: "Describe the task for this governed pipeline.", policy: "inherit", requireEvidence: true };
+  if (nodeType === "doc-loader" || nodeType === "file-read") return { text: "Paste document text or configure a governed URL.", policy: "tool_allowlist", requireEvidence: true };
   if (nodeType === "langchain_agent" || nodeType === "lc-agent") return {
     model_provider: "ollama",
     model_name: "qwen2.5:3b",
@@ -497,6 +491,10 @@ function defaultNodeConfig(catId: string, nodeType: string): NodeConfig {
   if (catId === "models" || nodeType.startsWith("llm-")) return { provider: nodeType.replace("llm-", ""), model: nodeType, policy: "cost_quality_balanced", maxLatencyMs: 1200, monthlyCapUsd: 2500, requireEvidence: true };
   if (catId === "routing" || nodeType.includes("policy")) return { policy: "sovereign_default", requireEvidence: true, redactPii: true, maxLatencyMs: 300 };
   if (catId === "output") return { outputSchema: "signed_json", requireEvidence: true, redactPii: nodeType.includes("pii") };
+  if (nodeType === "http-call") return { method: "GET", url: "", policy: "tool_allowlist", requireEvidence: true, maxLatencyMs: 2000 };
+  if (nodeType === "web-search") return { query: "", policy: "tool_allowlist", requireEvidence: true, maxLatencyMs: 3000 };
+  if (nodeType === "sql-query") return { query: "select 1 as ok", policy: "tool_allowlist", requireEvidence: true, maxLatencyMs: 2000 };
+  if (nodeType === "marketplace-tool") return { query: "governance", policy: "tool_allowlist", requireEvidence: true, maxLatencyMs: 1200 };
   if (catId === "tools") return { policy: "tool_allowlist", requireEvidence: true, maxLatencyMs: 2000 };
   return { policy: "inherit", requireEvidence: true };
 }
@@ -556,6 +554,10 @@ function ReadinessPanel({ readiness }: { readiness: { label: string; pass: boole
 
 function NodeInspector({ node, config, onChange }: { node: PNode; config: NodeConfig; onChange: (patch: NodeConfig) => void }) {
   const isLangChainAgent = node.nodeType === "langchain_agent" || node.nodeType === "lc-agent";
+  const acceptsText = ["input", "doc-loader", "file-read"].includes(node.nodeType);
+  const acceptsUrl = ["doc-loader", "file-read", "http-call", "webhook"].includes(node.nodeType);
+  const acceptsQuery = ["web-search", "sql-query", "marketplace-tool"].includes(node.nodeType);
+  const acceptsHttp = node.nodeType === "http-call";
   const allowedTools = config.tools_allowed || [];
   const blockedTools = config.blocked_tools || [];
   const toggleTool = (tool: string) => {
@@ -597,6 +599,33 @@ function NodeInspector({ node, config, onChange }: { node: PNode; config: NodeCo
         <Control label="Model / endpoint">
           <input className="input h-8 text-xs" value={isLangChainAgent ? (config.model_name || "") : (config.model || "")} onChange={(e) => onChange(isLangChainAgent ? { model_name: e.target.value } : { model: e.target.value })} placeholder={isLangChainAgent ? "qwen2.5:3b" : "policy-routed"} />
         </Control>
+        {acceptsText && (
+          <Control label="Input text">
+            <textarea className="input min-h-20 py-2 text-xs resize-none" value={config.text || ""} onChange={(e) => onChange({ text: e.target.value })} placeholder="Text payload" />
+          </Control>
+        )}
+        {acceptsQuery && (
+          <Control label={node.nodeType === "sql-query" ? "SQL query" : "Query"}>
+            <textarea className="input min-h-16 py-2 text-xs resize-none font-mono" value={config.query || ""} onChange={(e) => onChange({ query: e.target.value })} placeholder={node.nodeType === "sql-query" ? "select 1 as ok" : "Search query"} />
+          </Control>
+        )}
+        {acceptsUrl && (
+          <Control label="URL">
+            <input className="input h-8 text-xs" value={config.url || ""} onChange={(e) => onChange({ url: e.target.value })} placeholder="https://api.example.com" />
+          </Control>
+        )}
+        {acceptsHttp && (
+          <div className="grid grid-cols-2 gap-2">
+            <Control label="Method">
+              <select className="input h-8 text-xs" value={config.method || "GET"} onChange={(e) => onChange({ method: e.target.value })}>
+                {["GET", "POST", "PUT", "PATCH", "DELETE"].map((m) => <option key={m} className="bg-bg-800" value={m}>{m}</option>)}
+              </select>
+            </Control>
+            <Control label="Body">
+              <input className="input h-8 text-xs" value={config.body || ""} onChange={(e) => onChange({ body: e.target.value })} placeholder="JSON or text" />
+            </Control>
+          </div>
+        )}
         {isLangChainAgent && (
           <>
             <div className="grid grid-cols-2 gap-2">
