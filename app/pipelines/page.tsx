@@ -54,6 +54,17 @@ type NodeConfig = {
   committed_spend_usd?: number;
   approval_id?: string;
   approved_by?: string;
+  reason?: string;
+  email?: string;
+  webhook_url?: string;
+  parent_hash?: string;
+  max_price_usd?: number;
+  workspace_budget_usd?: number;
+  asset?: string;
+  network?: string;
+  settlement_required?: boolean;
+  settlement_proof?: string;
+  traffic_sample?: number;
   status?: string;
   format?: string;
   scope?: string;
@@ -91,24 +102,14 @@ type NodeConfig = {
   outputSchema?: string;
 };
 
-// LangChain category — many teams standardise on it, so it's first-class here.
-const LANGCHAIN_CAT = {
-  id: "langchain",
-  label: "LangChain",
-  nodes: [
-    { id: "langchain_agent", name: "LangChain Agent", description: "ReAct tool-calling agent" },
-    { id: "lc-parser", name: "Output Parser", description: "Structured Pydantic parsing" },
-  ],
-};
-
-// The backend node catalog is the execution contract. Keep local extras empty
-// unless a matching backend adapter exists.
-const EXTRA: Record<string, { id: string; name: string; description: string }[]> = {
-};
-
 function catOf(nodeType: string, type: string | undefined, lookup: Record<string, string>): string {
   if (lookup[nodeType]) return lookup[nodeType];
   switch (type) {
+    case "agent": return "agents";
+    case "integration": return "integrations";
+    case "data": return "data";
+    case "runtime": return "runtime";
+    case "custom": return "custom";
     case "model": case "embedding": return "models";
     case "vector_store": case "transform": case "retrieval": return "retrieval";
     case "tool": return "tools";
@@ -136,6 +137,7 @@ export default function PipelinesPage() {
   const [loadingGraph, setLoadingGraph] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deploying, setDeploying] = useState(false);
+  const [shadowDeploy, setShadowDeploy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [running, setRunning] = useState(false);
   const [stageStatus, setStageStatus] = useState<Record<string, string>>({});
@@ -263,6 +265,17 @@ export default function PipelinesPage() {
             setRunMsg(`Completed · evidence ${ev.evidence_id || "—"} · proof ${ev.proof_hash || "—"}`);
             runs.mutate();
           }
+          if (ev.type === "run.waiting_approval") {
+            setStageStatus((s) => ({ ...s, Gate: "running" }));
+            const approvalId = ev.approval?.approval_id || "approval required";
+            const reason = ev.approval?.reason || "ASK_HUMAN is waiting for approval";
+            setRunMsg(`Waiting approval: ${approvalId} - ${reason}`);
+            runs.mutate();
+          }
+          if (ev.type === "run.failed") {
+            setRunMsg(`Run failed: ${ev.error || "backend execution failed"}`);
+            runs.mutate();
+          }
         }
       }
     } catch (e) {
@@ -310,7 +323,8 @@ export default function PipelinesPage() {
           auth: "api-key",
           region: "eu-sovereign",
           rateLimit: "100 rpm",
-          status: "live",
+          status: shadowDeploy ? "shadow" : "live",
+          shadowMode: shadowDeploy,
         },
       });
       router.push("/deployments");
@@ -355,6 +369,10 @@ export default function PipelinesPage() {
               <div className="ml-auto flex items-center gap-2">
                 <Button variant="ghost" onClick={saveGraph} loading={saving}><Save size={14} /> {saved ? "Saved" : "Save"}</Button>
                 <Button variant="ghost" onClick={testRun} loading={running}><Play size={14} /> Test</Button>
+                <label className="flex items-center gap-2 rounded-md border border-border bg-bg-900 px-2 py-1.5 text-[11px] text-ink-300">
+                  <input type="checkbox" checked={shadowDeploy} onChange={(e) => setShadowDeploy(e.target.checked)} />
+                  Shadow
+                </label>
                 <Button onClick={deployAsEndpoint} loading={deploying}><Rocket size={14} /> Deploy as endpoint</Button>
               </div>
             </div>
@@ -548,6 +566,27 @@ function defaultNodeConfig(catId: string, nodeType: string): NodeConfig {
   if (nodeType === "reranker" || nodeType === "hybrid-search") return { query: "", top_k: 5, policy: "sovereign_default", requireEvidence: true };
   if (nodeType === "evidence-pack") return { format: "signed_json", policy: "sovereign_default", requireEvidence: true };
   if (nodeType === "pgl-register") return { record_id: "", policy: "sovereign_default", requireEvidence: true };
+  if (nodeType === "ask-human") return {
+    approval_id: "",
+    reason: "Human approval required before this governed workflow can continue.",
+    email: "",
+    webhook_url: "",
+    policy: "sovereign_default",
+    requireEvidence: true,
+  };
+  if (nodeType === "pgl-lineage-anchor") return { parent_hash: "", record_id: "", policy: "sovereign_default", requireEvidence: true };
+  if (nodeType === "x402-payment-gate") return {
+    max_price_usd: 0.01,
+    workspace_budget_usd: 2500,
+    asset: "USDC",
+    network: "base",
+    settlement_required: false,
+    settlement_proof: "",
+    policy: "cost_quality_balanced",
+    requireEvidence: true,
+  };
+  if (nodeType === "evidence-receipt") return { format: "receipt_json", policy: "sovereign_default", requireEvidence: true };
+  if (nodeType === "shadow-mode") return { traffic_sample: 0.05, policy: "sovereign_default", requireEvidence: true };
   if (nodeType === "repo-risk-gate") return { repo_url: "", max_risk_score: 70, policy: "sovereign_default", requireEvidence: true };
   if (nodeType === "cost-gate") return { max_cost_usd: 0.25, policy: "cost_quality_balanced", requireEvidence: true };
   if (nodeType === "budget-gate") return { monthly_cap_usd: 2500, committed_spend_usd: 0, policy: "cost_quality_balanced", requireEvidence: true };
@@ -720,7 +759,7 @@ function NodeInspector({ node, config, onChange }: { node: PNode; config: NodeCo
   const isRoutingConfig = ["cost-router", "fallback", "load-balancer", "classifier", "semantic-router"].includes(node.nodeType);
   const isLangGraph = node.nodeType === "lc-langgraph";
   const isCodeExec = ["code-exec", "custom-python"].includes(node.nodeType);
-  const isVeklomGate = ["repo-risk-gate", "cost-gate", "budget-gate", "human-approval", "pgl-register", "pgl-register-agent", "evidence-pack", "lock-engine", "deploy-endpoint", "deploy-agent"].includes(node.nodeType);
+  const isVeklomGate = ["repo-risk-gate", "cost-gate", "budget-gate", "human-approval", "ask-human", "pgl-register", "pgl-register-agent", "pgl-lineage-anchor", "x402-payment-gate", "evidence-pack", "evidence-receipt", "shadow-mode", "lock-engine", "deploy-endpoint", "deploy-agent"].includes(node.nodeType);
   const isWebhookLike = ["webhook", "webhook-output", "email-send", "slack-send", "discord-send", "github-action", "jira-action", "pagerduty-event", "stripe-event"].includes(node.nodeType);
   const isCustomContract = ["custom-mcp-tool", "custom-node-package"].includes(node.nodeType);
   const isRuntimeContract = ["retry-logic", "circuit-breaker", "rate-limiter"].includes(node.nodeType);
@@ -890,14 +929,81 @@ function NodeInspector({ node, config, onChange }: { node: PNode; config: NodeCo
             </Control>
           </>
         )}
+        {isVeklomGate && node.nodeType === "ask-human" && (
+          <>
+            <Control label="Approval ID">
+              <input className="input h-8 text-xs" value={config.approval_id || ""} onChange={(e) => onChange({ approval_id: e.target.value })} placeholder="auto or ticket id" />
+            </Control>
+            <Control label="Reason">
+              <textarea className="input min-h-16 py-2 text-xs resize-none" value={config.reason || ""} onChange={(e) => onChange({ reason: e.target.value })} placeholder="Why approval is required" />
+            </Control>
+            <div className="grid grid-cols-2 gap-2">
+              <Control label="Approver email">
+                <input className="input h-8 text-xs" value={config.email || ""} onChange={(e) => onChange({ email: e.target.value })} placeholder="security@company.com" />
+              </Control>
+              <Control label="Webhook URL">
+                <input className="input h-8 text-xs" value={config.webhook_url || ""} onChange={(e) => onChange({ webhook_url: e.target.value })} placeholder="https://..." />
+              </Control>
+            </div>
+          </>
+        )}
         {isVeklomGate && node.nodeType === "pgl-register" && (
           <Control label="Ledger record">
             <input className="input h-8 text-xs" value={config.record_id || ""} onChange={(e) => onChange({ record_id: e.target.value })} placeholder="auto" />
           </Control>
         )}
+        {isVeklomGate && node.nodeType === "pgl-lineage-anchor" && (
+          <div className="grid grid-cols-2 gap-2">
+            <Control label="Parent proof hash">
+              <input className="input h-8 text-xs font-mono" value={config.parent_hash || ""} onChange={(e) => onChange({ parent_hash: e.target.value })} placeholder="0x..." />
+            </Control>
+            <Control label="Record ID">
+              <input className="input h-8 text-xs" value={config.record_id || ""} onChange={(e) => onChange({ record_id: e.target.value })} placeholder="auto" />
+            </Control>
+          </div>
+        )}
+        {isVeklomGate && node.nodeType === "x402-payment-gate" && (
+          <>
+            <div className="grid grid-cols-2 gap-2">
+              <Control label="Max price USD">
+                <input className="input h-8 text-xs" type="number" step="0.000001" value={config.max_price_usd ?? 0.01} onChange={(e) => onChange({ max_price_usd: Number(e.target.value) })} />
+              </Control>
+              <Control label="Workspace cap">
+                <input className="input h-8 text-xs" type="number" value={config.workspace_budget_usd ?? 2500} onChange={(e) => onChange({ workspace_budget_usd: Number(e.target.value) })} />
+              </Control>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Control label="Asset">
+                <input className="input h-8 text-xs" value={config.asset || "USDC"} onChange={(e) => onChange({ asset: e.target.value })} />
+              </Control>
+              <Control label="Network">
+                <input className="input h-8 text-xs" value={config.network || "base"} onChange={(e) => onChange({ network: e.target.value })} />
+              </Control>
+            </div>
+            <label className="flex items-center justify-between gap-3 rounded-md border border-border bg-bg-900 px-2 py-1.5 text-[11px] text-ink-300">
+              Settlement proof required
+              <input type="checkbox" checked={!!config.settlement_required} onChange={(e) => onChange({ settlement_required: e.target.checked })} />
+            </label>
+            {config.settlement_required && (
+              <Control label="Settlement proof">
+                <input className="input h-8 text-xs font-mono" value={config.settlement_proof || ""} onChange={(e) => onChange({ settlement_proof: e.target.value })} placeholder="payment proof" />
+              </Control>
+            )}
+          </>
+        )}
         {isVeklomGate && node.nodeType === "evidence-pack" && (
           <Control label="Evidence format">
             <input className="input h-8 text-xs" value={config.format || "signed_json"} onChange={(e) => onChange({ format: e.target.value })} />
+          </Control>
+        )}
+        {isVeklomGate && node.nodeType === "evidence-receipt" && (
+          <Control label="Receipt format">
+            <input className="input h-8 text-xs" value={config.format || "receipt_json"} onChange={(e) => onChange({ format: e.target.value })} />
+          </Control>
+        )}
+        {isVeklomGate && node.nodeType === "shadow-mode" && (
+          <Control label="Traffic sample">
+            <input className="input h-8 text-xs" type="number" min="0" max="1" step="0.01" value={config.traffic_sample ?? 0.05} onChange={(e) => onChange({ traffic_sample: Number(e.target.value) })} />
           </Control>
         )}
         {isVeklomGate && node.nodeType === "lock-engine" && (
