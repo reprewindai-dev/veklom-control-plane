@@ -12,10 +12,13 @@ import { LogoWordmark } from "./Logo";
 import { Pill } from "./telemetry";
 
 const GROUP_TITLES: Record<string, string> = {
-  ops: "Operations",
-  governance: "Governance",
-  account: "Account",
-  vendor: "Vendor",
+  overview: "Overview",
+  build: "Build",
+  marketplace: "Marketplace",
+  run: "Run",
+  insights: "Insights · Proactive",
+  govern: "Govern",
+  workspace: "Workspace",
   admin: "Admin",
 };
 
@@ -148,7 +151,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   if (!me) return null;
 
   const groups = modulesByGroup();
-  const orderedGroups: Array<keyof typeof groups> = ["ops", "governance", "account", "vendor", "admin"];
+  const orderedGroups: Array<keyof typeof groups> = ["overview", "build", "marketplace", "run", "insights", "govern", "workspace", "admin"];
 
   return (
     <div className="min-h-screen flex">
