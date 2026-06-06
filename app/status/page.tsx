@@ -49,14 +49,14 @@ export default function StatusPage() {
       <ModuleHeader
         breadcrumb="Operations · System Status"
         title="Platform status"
-        subtitle={u.headline || "Live health of every governed runtime system. Telemetry points represent simulated test traffic."}
+        subtitle={u.headline || "Live health of every governed runtime system."}
         pills={
           uptime.isLoading ? undefined : (
             <>
               <Pill tone={statusTone(u.overall_status) as any} dot>{(u.overall_status || "operational").toUpperCase()}</Pill>
-              <Pill tone="neutral">Simulated: {u.uptime_percent ?? "—"}% uptime · {u.window_days ?? 90}d</Pill>
-              <Pill tone="green">{u.active_incidents ?? 0} active incidents</Pill>
-              <Pill tone="violet">SIMULATED DATA</Pill>
+              <Pill tone="neutral">{u.uptime_percent ?? "—"}% uptime · {u.window_days ?? 90}d</Pill>
+              <Pill tone={(u.active_incidents ?? 0) > 0 ? "amber" : "green"}>{u.active_incidents ?? 0} active incidents</Pill>
+              {u.simulated ? <Pill tone="violet">SIMULATED DATA</Pill> : <Pill tone="green">LIVE DATA</Pill>}
             </>
           )
         }
@@ -67,7 +67,7 @@ export default function StatusPage() {
         <ResTile icon={<Cpu size={13} />} label="CPU" percent={m.cpu_percent} />
         <ResTile icon={<MemoryStick size={13} />} label="Memory" percent={m.memory_percent} />
         <ResTile icon={<HardDrive size={13} />} label="Disk" percent={m.disk_percent} />
-        <ResTile icon={<Wifi size={13} />} label="Network" raw={m.network_mbps != null ? `${m.network_mbps} Mbps` : undefined} />
+        <ResTile icon={<Wifi size={13} />} label="Calls (5m)" raw={fmtNum(m.traffic_samples ?? 0)} />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4 mb-4">
@@ -75,7 +75,7 @@ export default function StatusPage() {
           <KV k="Requests / sec" v={fmtNum(m.requests_per_second ?? 0)} />
           <KV k="Avg latency" v={`${m.avg_latency_ms ?? "—"} ms`} />
           <KV k="Error rate" v={`${((m.error_rate ?? 0) * 100).toFixed(3)}%`} />
-          <KV k="Active connections" v={fmtNum(m.active_connections ?? 0)} />
+          <KV k="Sample window" v={`${m.traffic_window_minutes ?? 5} min`} />
           <KV k="Checks passed (24h)" v={fmtNum(u.checks_passed_24h ?? 0)} />
           <KV k="Avg response" v={`${u.avg_response_time_ms ?? "—"} ms`} />
         </SectionCard>
@@ -128,7 +128,7 @@ export default function StatusPage() {
               <Pill tone={inc.status === "resolved" ? "green" : "neutral"}>{inc.status}</Pill>
               <div className="min-w-0">
                 <div className="text-[12.5px] text-ink-100">{inc.title}</div>
-                <div className="text-[11px] text-ink-600">{inc.date} · {inc.impact}</div>
+                <div className="text-[11px] text-ink-600">{inc.date}{inc.severity ? ` · ${inc.severity}` : ""}</div>
               </div>
             </div>
           ))}
