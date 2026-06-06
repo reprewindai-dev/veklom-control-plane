@@ -297,6 +297,38 @@ export default function GpcPage() {
           )}
         </div>
       </div>
+
+      {/* Live GPC Black Box — the real Governed Plan Compiler engine, embedded */}
+      <SectionCard
+        label="GPC · Live Engine"
+        title="Governed Plan Compiler — Black Box"
+        className="mt-5"
+        actions={
+          <a
+            href="https://uacpv3.onrender.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] text-brand-400 hover:text-brand-300 inline-flex items-center gap-1"
+          >
+            Open full engine <Play size={10} />
+          </a>
+        }
+      >
+        <div className="rounded-lg overflow-hidden border border-border bg-bg-900">
+          <iframe
+            src="https://uacpv3.onrender.com/"
+            title="Veklom Governed Plan Compiler (GPC) — live black box"
+            className="w-full h-[680px] block"
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+          />
+        </div>
+        <p className="text-[11px] text-ink-600 mt-2">
+          Live GPC black box (uacpv3.onrender.com). If the embed does not load (host blocks framing),
+          use <span className="text-ink-400">Open full engine</span> above.
+        </p>
+      </SectionCard>
     </Shell>
   );
 }
