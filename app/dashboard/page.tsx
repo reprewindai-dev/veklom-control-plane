@@ -8,7 +8,8 @@ import {
   ACCENT, DualLineChart, Pill, ProgressBar, RoutePill, SectionCard,
   StatTile, fmtNum, fmtUsd, statusTone,
 } from "@/components/telemetry";
-import { Activity, Cpu, DollarSign, FileCheck2, Gauge, Layers, Sparkles, ShieldCheck, ArrowUpRight } from "lucide-react";
+import { Activity, Cpu, DollarSign, FileCheck2, Gauge, Layers, Sparkles, ShieldCheck, ArrowUpRight, Fingerprint } from "lucide-react";
+import { AuthorityPanel } from "@/components/AuthorityPanel";
 
 export default function DashboardPage() {
   const overview = useApi<any>("/api/v1/workspace/overview");
@@ -225,6 +226,21 @@ export default function DashboardPage() {
               ))}
             </ul>
           )}
+        </SectionCard>
+      </div>
+
+      {/* Authority Panel — PGL Agent Authority Runtime */}
+      <div className="mt-4">
+        <SectionCard 
+          label="Agent Authority" 
+          title="PGL Birth Certificate & Chain"
+          actions={
+            <Link href="/onboarding/pgl" className="text-xs text-brand-400 hover:underline inline-flex items-center gap-1">
+              <Fingerprint size={12} /> Manage
+            </Link>
+          }
+        >
+          <AuthorityPanel />
         </SectionCard>
       </div>
     </Shell>

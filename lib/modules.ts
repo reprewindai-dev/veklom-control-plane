@@ -16,7 +16,10 @@ export interface ModuleDef {
 export const MODULES: ModuleDef[] = [
   { slug: "dashboard", label: "Overview", href: "/dashboard", group: "overview", minTier: "starter", description: "Workspace health, activity, spend, routing, policy, and audit summary.", icon: "LayoutDashboard", sidebar: true },
   { slug: "spine", label: "Asset Spine", href: "/spine", group: "overview", minTier: "starter", description: "The governed control-plane spine: source, risk gate, wrapper, marketplace, deployment, runtime, evidence.", icon: "GitBranch", sidebar: true },
+  { slug: "pgl-onboarding", label: "PGL Onboarding", href: "/onboarding/pgl", group: "overview", minTier: "free", description: "Create your Agent Authority profile with PGL birth certificate.", icon: "Fingerprint" },
 
+  { slug: "build-release", label: "Build & Release", href: "/build-release", group: "build", minTier: "pro", description: "Governed path from source to deployment with authority, policy, and evidence.", icon: "Rocket", sidebar: true },
+  { slug: "agents", label: "Agents", href: "/agents", group: "build", minTier: "starter", description: "PGL certificates, genomes, and agent authority profiles.", icon: "Fingerprint", sidebar: true },
   { slug: "gpc", label: "Plan Compiler (GPC)", href: "/gpc", group: "build", minTier: "pro", description: "Compile intent into deterministic, policy-checked execution plans.", icon: "GitBranch" },
   { slug: "pipelines", label: "Pipelines", href: "/pipelines", group: "build", minTier: "pro", description: "Visual builder for governed inference chains, tools, routing, and evidence.", icon: "Workflow", sidebar: true },
 
@@ -26,17 +29,17 @@ export const MODULES: ModuleDef[] = [
   { slug: "vendor-payouts", label: "Payouts", href: "/vendor/payouts", group: "marketplace", minTier: "starter", description: "Stripe Connect payouts and reconciliation.", icon: "Banknote" },
   { slug: "vendor-stripe", label: "Stripe Connect", href: "/vendor/stripe", group: "marketplace", minTier: "starter", description: "Connect onboarding and vendor status.", icon: "Link2" },
 
-  { slug: "runtime", label: "Runtime", href: "/runtime", group: "run", minTier: "free", description: "Deployments, terminal, routing, usage, and autonomous runtime controls.", icon: "Terminal", sidebar: true },
-  { slug: "deployments", label: "Deployments", href: "/deployments", group: "run", minTier: "pro", description: "BYOS deployment tracking, endpoints, code, and webhooks.", icon: "Server" },
-  { slug: "playground", label: "Playground", href: "/playground", group: "run", minTier: "free", description: "Governed inference console with routing, policy, and cost per call.", icon: "FlaskConical", sidebar: true },
-  { slug: "routing", label: "Smart Routing", href: "/routing", group: "run", minTier: "pro", description: "Provider routing rules, policies, and economics.", icon: "Network" },
-  { slug: "autonomous", label: "Autonomous Jobs", href: "/autonomous", group: "run", minTier: "pro", description: "Execute, monitor, and override autonomous runs.", icon: "Bot" },
+  { slug: "operations", label: "Operations", href: "/operations", group: "run", minTier: "free", description: "Deployments, monitoring, and autonomous runtime controls.", icon: "Terminal", sidebar: true },
+  { slug: "test-lab", label: "Test Lab", href: "/test-lab", group: "run", minTier: "starter", description: "Agent Arena integration and testing environment.", icon: "FlaskConical", sidebar: true },
+  { slug: "routing", label: "Smart Routing", href: "/routing", group: "run", minTier: "pro", description: "Intelligent request routing between Hetzner primary and AWS burst with cost optimization.", icon: "Route", sidebar: true },
+  { slug: "workflows", label: "Workflows", href: "/workflows", group: "build", minTier: "pro", description: "Visual workflow builder with Authority Panel integration.", icon: "Workflow", sidebar: true },
 
   { slug: "insights", label: "Insights", href: "/insights", group: "insights", minTier: "pro", description: "Proactive pulse, signals, forecasts, and recommended actions.", icon: "Activity" },
   { slug: "usage", label: "Usage Analytics", href: "/usage", group: "insights", minTier: "pro", description: "Per-endpoint usage, cost, and throughput.", icon: "BarChart3" },
   { slug: "status", label: "System Status", href: "/status", group: "insights", minTier: "free", description: "Platform health, uptime, components, and latency.", icon: "HeartPulse" },
 
-  { slug: "governance", label: "Governance", href: "/governance", group: "govern", minTier: "sovereign", description: "Audit, compliance, privacy, safety, security, and kill-switch controls.", icon: "Scale", sidebar: true },
+  { slug: "seked", label: "SEKED Control", href: "/seked", group: "govern", minTier: "sovereign", description: "Policy storage, decision routing, and proof logging for governed AI workflows.", icon: "Shield", sidebar: true },
+  { slug: "trust-center", label: "Trust Center", href: "/trust-center", group: "govern", minTier: "sovereign", description: "Audit, compliance, privacy, safety, security, and trust controls.", icon: "Scale", sidebar: true },
   { slug: "audit", label: "Audit Log", href: "/audit", group: "govern", minTier: "pro", description: "Tamper-evident audit trail and compliance reports.", icon: "FileSearch" },
   { slug: "compliance", label: "Compliance", href: "/compliance", group: "govern", minTier: "sovereign", description: "Frameworks, evidence packages, and scheduled exports.", icon: "ShieldCheck" },
   { slug: "security", label: "Security Center", href: "/security", group: "govern", minTier: "sovereign", description: "Alerts, vault, and governance frames.", icon: "Shield" },

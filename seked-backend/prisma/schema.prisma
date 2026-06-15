@@ -1,0 +1,223 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Policy {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  sigma_threshold Float
+  ci_threshold    Float
+  si_threshold    Float
+  action_rules    Json     // Store action rules as JSON
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  
+  // Relations
+  decisions       Decision[]
+  proofs          Proof[]
+  authority_runs  AuthorityRun[]
+  
+  @@map("policies")
+}
+
+model SekedState {
+  id          String   @id @default(cuid())
+  measurement  Json     // {E, R, C, D, S, timestamp}
+  ratios       Json     // {sigma, ci, si}
+  directive    Json     // {ratio, directive, action_type, confidence, reasoning}
+  fingerprint  String   // SHA-256 hash
+  created_at   DateTime @default(now())
+  
+  // Relations
+  decisions    Decision[]
+  proofs       Proof[]
+  authority_runs AuthorityRun[]
+  
+  @@map("seked_states")
+}
+
+model DecisionRequest {
+  id         String   @id @default(cuid())
+  job_id     String
+  measurement Json    // SekedMeasurement
+  context    String?
+  timestamp  DateTime @default(now())
+  
+  // Relations
+  decision   Decision?
+  
+  @@map("decision_requests")
+}
+
+model Decision {
+  id              String     @id @default(cuid())
+  request_id      String     @unique
+  job_id          String
+  action          String     // RUN, HOLD, BLOCK, RECOVER
+  delay_seconds   Int
+  proof_id        String
+  seked_state_id  String
+  policy_id       String?
+  engine_response Json?
+  created_at      DateTime   @default(now())
+  updated_at      DateTime   @updatedAt
+  
+  // Relations
+  request         DecisionRequest @relation(fields: [request_id], references: [id])
+  seked_state     SekedState     @relation(fields: [seked_state_id], references: [id])
+  policy          Policy?        @relation(fields: [policy_id], references: [id])
+  proof           Proof          @relation(fields: [proof_id], references: [id])
+  authority_run   AuthorityRun?
+  
+  @@map("decisions")
+}
+
+model Proof {
+  id              String   @id @default(cuid())
+  job_id          String
+  timestamp       DateTime @default(now())
+  action          String
+  seked_state_id  String
+  policy_id       String
+  engine_url      String
+  evidence        Json?
+  created_at      DateTime @default(now())
+  
+  // Relations
+  seked_state     SekedState @relation(fields: [seked_state_id], references: [id])
+  policy          Policy     @relation(fields: [policy_id], references: [id])
+  decision        Decision   @relation(fields: [proof_id], references: [id])
+  evidence_pack   EvidencePack?
+  
+  @@map("proofs")
+}
+
+model AuthorityRun {
+  id                String     @id @default(cuid())
+  job_id            String
+  status            String     // pending, approved, rejected, executed
+  policy_id         String?
+  proof_id          String?
+  decision_id       String?
+  seked_state_id    String?
+  execution_identity String?
+  created_at        DateTime   @default(now())
+  updated_at        DateTime   @updatedAt
+  
+  // Relations
+  policy            Policy?    @relation(fields: [policy_id], references: [id])
+  proof             Proof?     @relation(fields: [proof_id], references: [id])
+  decision          Decision?  @relation(fields: [decision_id], references: [id])
+  seked_state       SekedState? @relation(fields: [seked_state_id], references: [id])
+  evidence_pack     EvidencePack?
+  
+  @@map("authority_runs")
+}
+
+model EvidencePack {
+  id                     String     @id @default(cuid())
+  authority_run_id       String     @unique
+  proofs                 Json       // Array of proof IDs
+  verification_status    String     // pending, verified, failed
+  specification_compliance Boolean @default(true)
+  created_at             DateTime   @default(now())
+  verified_at            DateTime?
+  
+  // Relations
+  authority_run          AuthorityRun @relation(fields: [authority_run_id], references: [id])
+  
+  @@map("evidence_packs")
+}
+
+model AgentState {
+  id              String   @id @default(cuid())
+  agent_id        String   @unique
+  name            String
+  status          String   // active, idle, error, recovering
+  measurement     Json     // SekedMeasurement
+  ratios          Json     // SekedRatios
+  directive       Json     // SekedDirective
+  performance_metrics Json // {response_time_ms, success_rate, error_rate, throughput}
+  last_updated    DateTime @default(now())
+  created_at      DateTime @default(now())
+  
+  @@map("agent_states")
+}
+
+model HealthStatus {
+  id                    String   @id @default(cuid())
+  status                String   // healthy, degraded, unhealthy
+  timestamp             DateTime @default(now())
+  engine_url            String?
+  policies_count        Int?
+  proofs_count          Int?
+  specification_version String   @default("1.0")
+  fingerprint           String   @default("038f8464884a556fbee43972b27cbdfd08d3b522e644c0c644ad1b2ded82fcc7")
+  
+  @@map("health_status")
+}
+
+model ExecutionIdentity {
+  execution_id                String   @id @default(cuid())
+  run_id                      String   @unique
+  workspace_id                String
+  pgl_pre_certificate_id      String
+  pgl_post_certificate_id     String?
+  genome_hash                 String
+  constitution_hash           String
+  plan_hash                   String
+  tool_manifest_hash          String
+  delegation_chain_hash       String
+  input_hash                  String
+  seked_attestation_hash      String
+  directive                   String
+  risk_tier                   String
+  budget_approved_cents       Int
+  budget_reserve_cents        Int?
+  delegation_depth            Int
+  ttl_seconds                 Int
+  expires_at                  DateTime
+  scope_json                  Json
+  human_attestation_hash      String?
+  ai_attestation_hash         String?
+  execution_attestation_hash  String?
+  issuer                      String
+  issued_at                   DateTime @default(now())
+  signature                   String
+  hash                        String
+  revoked                     Boolean  @default(false)
+  revoked_at                  DateTime?
+  created_at                  DateTime @default(now())
+  
+  // Relations
+  decisions                   Decision[]
+  
+  @@map("execution_identities")
+}
+
+model PGLCertificate {
+  certificate_id    String   @id
+  run_id            String   @unique
+  workspace_id      String
+  genome_hash       String
+  constitution_hash String
+  plan_hash         String
+  output_hash       String?
+  outcome_hash      String?
+  persisted         Boolean  @default(false)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  
+  // Relations
+  execution_identities ExecutionIdentity[]
+  
+  @@map("pgl_certificates")
+}

@@ -26,6 +26,20 @@ export default function WalletPage() {
     } finally { setBusy(false); }
   }
 
+  // Handle loading states properly
+  if (balance.error || options.error) {
+    return (
+      <Shell>
+        <TierGate required="starter" feature="Token Wallet">
+          <PageHeader title="Token Wallet" subtitle="Track balance, top-ups, and per-endpoint consumption." />
+          <div className="mb-4">
+            <ErrorBox message={`Failed to load wallet data: ${balance.error?.message || options.error?.message}`} />
+          </div>
+        </TierGate>
+      </Shell>
+    );
+  }
+
   return (
     <Shell>
       <TierGate required="starter" feature="Token Wallet">
