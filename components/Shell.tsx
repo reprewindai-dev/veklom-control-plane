@@ -12,14 +12,13 @@ import { LogoWordmark } from "./Logo";
 import { Pill } from "./telemetry";
 
 const GROUP_TITLES: Record<string, string> = {
-  overview: "Overview",
+  overview: "Network",
   build: "Build",
-  marketplace: "Marketplace",
   run: "Run",
-  insights: "Insights · Proactive",
-  govern: "Govern",
-  workspace: "Workspace",
-  admin: "Admin",
+  marketplace: "Exchange",
+  govern: "Zero-Trust",
+  workspace: "Treasury",
+  admin: "Global",
 };
 
 // Modules that surface live telemetry — flagged with a LIVE badge in the rail.

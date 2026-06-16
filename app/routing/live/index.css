@@ -1,0 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Custom classes for interactive animations or scrollbars */
+@layer utilities {
+  .glow-shadow-emerald {
+    box-shadow: 0 0 15px -3px rgba(16, 185, 129, 0.2);
+  }
+  .glow-shadow-rose {
+    box-shadow: 0 0 15px -3px rgba(244, 63, 94, 0.2);
+  }
+  .glow-shadow-amber {
+    box-shadow: 0 0 15px -3px rgba(245, 158, 11, 0.2);
+  }
+  .glow-shadow-blue {
+    box-shadow: 0 0 15px -3px rgba(59, 130, 246, 0.2);
+  }
+}

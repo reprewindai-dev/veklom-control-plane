@@ -14,47 +14,54 @@ export interface ModuleDef {
 // All pages remain indexed here for command search and deep links.
 // Only sidebar=true modules appear in the primary rail.
 export const MODULES: ModuleDef[] = [
-  { slug: "dashboard", label: "Overview", href: "/dashboard", group: "overview", minTier: "starter", description: "Workspace health, activity, spend, routing, policy, and audit summary.", icon: "LayoutDashboard", sidebar: true },
-  { slug: "spine", label: "Asset Spine", href: "/spine", group: "overview", minTier: "starter", description: "The governed control-plane spine: source, risk gate, wrapper, marketplace, deployment, runtime, evidence.", icon: "GitBranch", sidebar: true },
+  // 1. 🌐 Control Node (Dashboard)
+  { slug: "dashboard", label: "Control Node", href: "/dashboard", group: "overview", minTier: "starter", description: "Workspace health, activity, spend, routing, policy, and audit summary.", icon: "LayoutDashboard", sidebar: true },
+  { slug: "spine", label: "Asset Spine", href: "/spine", group: "overview", minTier: "starter", description: "The governed control-plane spine.", icon: "GitBranch", sidebar: false },
 
-  { slug: "gpc", label: "Plan Compiler (GPC)", href: "/gpc", group: "build", minTier: "pro", description: "Compile intent into deterministic, policy-checked execution plans.", icon: "GitBranch" },
-  { slug: "pipelines", label: "Pipelines", href: "/pipelines", group: "build", minTier: "pro", description: "Visual builder for governed inference chains, tools, routing, and evidence.", icon: "Workflow", sidebar: true },
+  // 2. ⚡ Build & Pipelines
+  { slug: "pipelines", label: "Pipelines & GPC", href: "/pipelines", group: "build", minTier: "pro", description: "Visual builder for governed inference chains, tools, routing, and evidence.", icon: "Workflow", sidebar: true },
+  { slug: "gpc", label: "Plan Compiler", href: "/gpc", group: "build", minTier: "pro", description: "Compile intent into deterministic plans.", icon: "GitBranch", sidebar: false },
 
-  { slug: "marketplace", label: "Marketplace", href: "/marketplace", group: "marketplace", minTier: "free", description: "Sovereign-ready assets, distribution, vendor listings, payouts, and installs.", icon: "Store", sidebar: true },
-  { slug: "vendor-listings", label: "My Listings", href: "/vendor/listings", group: "marketplace", minTier: "starter", description: "Submit, review, and manage marketplace listings.", icon: "Tags" },
-  { slug: "vendor-onboarding", label: "Vendor Onboarding", href: "/vendor/onboarding", group: "marketplace", minTier: "starter", description: "Become a marketplace vendor.", icon: "Rocket" },
-  { slug: "vendor-payouts", label: "Payouts", href: "/vendor/payouts", group: "marketplace", minTier: "starter", description: "Stripe Connect payouts and reconciliation.", icon: "Banknote" },
-  { slug: "vendor-stripe", label: "Stripe Connect", href: "/vendor/stripe", group: "marketplace", minTier: "starter", description: "Connect onboarding and vendor status.", icon: "Link2" },
+  // 3. 🧪 Run & Playground
+  { slug: "playground", label: "Playground & Runtime", href: "/playground", group: "run", minTier: "free", description: "Governed inference console with routing, policy, and cost per call.", icon: "FlaskConical", sidebar: true },
+  { slug: "runtime", label: "Runtime", href: "/runtime", group: "run", minTier: "free", description: "Deployments and terminal.", icon: "Terminal", sidebar: false },
+  { slug: "deployments", label: "Deployments", href: "/deployments", group: "run", minTier: "pro", description: "BYOS deployment tracking.", icon: "Server", sidebar: false },
+  { slug: "routing", label: "Smart Routing", href: "/routing", group: "run", minTier: "pro", description: "Provider routing rules.", icon: "Network", sidebar: false },
+  { slug: "autonomous", label: "Autonomous Jobs", href: "/autonomous", group: "run", minTier: "pro", description: "Execute and monitor autonomous runs.", icon: "Bot", sidebar: false },
 
-  { slug: "runtime", label: "Runtime", href: "/runtime", group: "run", minTier: "free", description: "Deployments, terminal, routing, usage, and autonomous runtime controls.", icon: "Terminal", sidebar: true },
-  { slug: "deployments", label: "Deployments", href: "/deployments", group: "run", minTier: "pro", description: "BYOS deployment tracking, endpoints, code, and webhooks.", icon: "Server" },
-  { slug: "playground", label: "Playground", href: "/playground", group: "run", minTier: "free", description: "Governed inference console with routing, policy, and cost per call.", icon: "FlaskConical", sidebar: true },
-  { slug: "routing", label: "Smart Routing", href: "/routing", group: "run", minTier: "pro", description: "Provider routing rules, policies, and economics.", icon: "Network" },
-  { slug: "autonomous", label: "Autonomous Jobs", href: "/autonomous", group: "run", minTier: "pro", description: "Execute, monitor, and override autonomous runs.", icon: "Bot" },
+  // 4. 📊 API Benchmarks & Trust Rankings
+  { slug: "benchmarks", label: "API Trust Rankings", href: "/benchmarks", group: "marketplace", minTier: "free", description: "Sovereign-compliance API trust rankings and Polymarket-style SLA prediction markets.", icon: "ActivitySquare", sidebar: true },
+  { slug: "benchmarks-arena", label: "Authority Arena", href: "/benchmarks/arena", group: "marketplace", minTier: "free", description: "Interactive agent character creator and consensus pipeline playground.", icon: "Gamepad2", sidebar: false },
+  { slug: "vendor-listings", label: "My APIs", href: "/benchmarks/listings", group: "marketplace", minTier: "starter", description: "Submit and manage benchmarked APIs.", icon: "BarChart", sidebar: false },
 
-  { slug: "insights", label: "Insights", href: "/insights", group: "insights", minTier: "pro", description: "Proactive pulse, signals, forecasts, and recommended actions.", icon: "Activity" },
-  { slug: "usage", label: "Usage Analytics", href: "/usage", group: "insights", minTier: "pro", description: "Per-endpoint usage, cost, and throughput.", icon: "BarChart3" },
-  { slug: "status", label: "System Status", href: "/status", group: "insights", minTier: "free", description: "Platform health, uptime, components, and latency.", icon: "HeartPulse" },
 
-  { slug: "governance", label: "Governance", href: "/governance", group: "govern", minTier: "sovereign", description: "Audit, compliance, privacy, safety, security, and kill-switch controls.", icon: "Scale", sidebar: true },
-  { slug: "audit", label: "Audit Log", href: "/audit", group: "govern", minTier: "pro", description: "Tamper-evident audit trail and compliance reports.", icon: "FileSearch" },
-  { slug: "compliance", label: "Compliance", href: "/compliance", group: "govern", minTier: "sovereign", description: "Frameworks, evidence packages, and scheduled exports.", icon: "ShieldCheck" },
-  { slug: "security", label: "Security Center", href: "/security", group: "govern", minTier: "sovereign", description: "Alerts, vault, and governance frames.", icon: "Shield" },
-  { slug: "locker", label: "Locker Security", href: "/locker", group: "govern", minTier: "sovereign", description: "Controls, monitoring, threats, and users.", icon: "Lock" },
-  { slug: "content-safety", label: "Content Safety", href: "/content-safety", group: "govern", minTier: "pro", description: "Scanning and age-verification.", icon: "ShieldAlert" },
-  { slug: "privacy", label: "Privacy Controls", href: "/privacy", group: "govern", minTier: "sovereign", description: "Data residency, redaction, and retention.", icon: "EyeOff" },
-  { slug: "kill-switch", label: "Kill Switch", href: "/kill-switch", group: "govern", minTier: "sovereign", description: "Halt execution with audit proof.", icon: "PowerOff" },
+  // 5. ⚖️ Governance & Security
+  { slug: "governance", label: "Governance Vault", href: "/governance", group: "govern", minTier: "sovereign", description: "Audit logs, compliance, privacy, safety, security, and kill-switch controls.", icon: "Scale", sidebar: true },
+  { slug: "audit", label: "Audit Log", href: "/audit", group: "govern", minTier: "pro", description: "Tamper-evident audit trail.", icon: "FileSearch", sidebar: false },
+  { slug: "compliance", label: "Compliance", href: "/compliance", group: "govern", minTier: "sovereign", description: "Frameworks and evidence packages.", icon: "ShieldCheck", sidebar: false },
+  { slug: "security", label: "Security Center", href: "/security", group: "govern", minTier: "sovereign", description: "Alerts and vault.", icon: "Shield", sidebar: false },
+  { slug: "locker", label: "Locker Security", href: "/locker", group: "govern", minTier: "sovereign", description: "Controls and monitoring.", icon: "Lock", sidebar: false },
+  { slug: "content-safety", label: "Content Safety", href: "/content-safety", group: "govern", minTier: "pro", description: "Scanning and age-verification.", icon: "ShieldAlert", sidebar: false },
+  { slug: "privacy", label: "Privacy Controls", href: "/privacy", group: "govern", minTier: "sovereign", description: "Data residency.", icon: "EyeOff", sidebar: false },
+  { slug: "kill-switch", label: "Kill Switch", href: "/kill-switch", group: "govern", minTier: "sovereign", description: "Halt execution.", icon: "PowerOff", sidebar: false },
 
-  { slug: "workspace", label: "Workspace", href: "/workspace", group: "workspace", minTier: "starter", description: "Team, access, keys, providers, models, billing, and budget controls.", icon: "Settings", sidebar: true },
-  { slug: "team", label: "Team & RBAC", href: "/team", group: "workspace", minTier: "pro", description: "Members, roles, SSO, SCIM, and MFA.", icon: "Users" },
-  { slug: "api-keys", label: "API Keys", href: "/api-keys", group: "workspace", minTier: "starter", description: "Issue, rotate, and revoke keys.", icon: "KeyRound" },
-  { slug: "webhooks", label: "Webhooks", href: "/webhooks", group: "workspace", minTier: "pro", description: "Alert and event webhook endpoints.", icon: "Webhook" },
-  { slug: "wallet", label: "Token Wallet", href: "/wallet", group: "workspace", minTier: "starter", description: "Balance, top-ups, and transactions.", icon: "Wallet" },
-  { slug: "billing", label: "Billing", href: "/billing", group: "workspace", minTier: "starter", description: "Invoices, breakdown, and allocation.", icon: "Receipt" },
-  { slug: "budget", label: "Budget Caps", href: "/budget", group: "workspace", minTier: "pro", description: "Caps, forecasts, and hard limits.", icon: "Gauge" },
-  { slug: "subscriptions", label: "Subscription", href: "/subscriptions", group: "workspace", minTier: "free", description: "Current plan, tier changes, and billing portal.", icon: "CreditCard" },
+  // 6. ⚙️ Workspace
+  { slug: "workspace", label: "Workspace Treasury", href: "/workspace", group: "workspace", minTier: "starter", description: "Team, access, API keys, models, billing, and budget controls.", icon: "Settings", sidebar: true },
+  { slug: "team", label: "Team & RBAC", href: "/team", group: "workspace", minTier: "pro", description: "Members and roles.", icon: "Users", sidebar: false },
+  { slug: "api-keys", label: "API Keys", href: "/api-keys", group: "workspace", minTier: "starter", description: "Issue and rotate keys.", icon: "KeyRound", sidebar: false },
+  { slug: "webhooks", label: "Webhooks", href: "/webhooks", group: "workspace", minTier: "pro", description: "Alert endpoints.", icon: "Webhook", sidebar: false },
+  { slug: "wallet", label: "Token Wallet", href: "/wallet", group: "workspace", minTier: "starter", description: "Balance and top-ups.", icon: "Wallet", sidebar: false },
+  { slug: "billing", label: "Billing", href: "/billing", group: "workspace", minTier: "starter", description: "Invoices and breakdown.", icon: "Receipt", sidebar: false },
+  { slug: "budget", label: "Budget Caps", href: "/budget", group: "workspace", minTier: "pro", description: "Caps and forecasts.", icon: "Gauge", sidebar: false },
+  { slug: "subscriptions", label: "Subscription", href: "/subscriptions", group: "workspace", minTier: "free", description: "Current plan.", icon: "CreditCard", sidebar: false },
 
-  { slug: "admin", label: "Admin", href: "/admin", group: "admin", minTier: "enterprise", description: "Workspaces, users, and billing reconciliation for superusers.", icon: "ShieldQuestion", sidebar: true },
+  // Legacy Insights (hidden from sidebar, accessed via Dashboard now)
+  { slug: "insights", label: "Insights", href: "/insights", group: "insights", minTier: "pro", description: "Proactive pulse.", icon: "Activity", sidebar: false },
+  { slug: "usage", label: "Usage Analytics", href: "/usage", group: "insights", minTier: "pro", description: "Cost and throughput.", icon: "BarChart3", sidebar: false },
+  { slug: "status", label: "System Status", href: "/status", group: "insights", minTier: "free", description: "Platform health.", icon: "HeartPulse", sidebar: false },
+
+  // Admin
+  { slug: "admin", label: "Global Admin", href: "/admin", group: "admin", minTier: "enterprise", description: "Workspaces, users, and billing reconciliation for superusers.", icon: "ShieldQuestion", sidebar: true },
 ];
 
 export function modulesByGroup() {
