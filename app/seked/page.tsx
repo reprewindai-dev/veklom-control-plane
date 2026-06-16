@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Shield, Settings, FileText, Activity, Brain, Bot } from "lucide-react";
 import PolicyManager from "../../components/seked/PolicyManager";
 import AuthorityDashboard from "../../components/seked/AuthorityDashboard";
@@ -23,7 +23,7 @@ export default function SekedPage() {
   const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null);
 
   // Poll health status
-  useState(() => {
+  useEffect(() => {
     const fetchHealth = async () => {
       try {
         const status = await getHealthStatus();
@@ -36,7 +36,7 @@ export default function SekedPage() {
     fetchHealth();
     const interval = setInterval(fetchHealth, 30000); // Every 30 seconds
     return () => clearInterval(interval);
-  });
+  }, []);
 
   const renderContent = () => {
     switch (activeTab) {
