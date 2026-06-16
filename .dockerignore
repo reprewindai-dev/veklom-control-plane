@@ -1,0 +1,27 @@
+# Dependencies
+node_modules
+npm-debug.log*
+
+# Next.js build output
+.next
+out
+
+# Environment files (set in Coolify env panel, not baked into image)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Git
+.git
+.gitignore
+
+# Dev tools
+.vscode
+.eslintcache
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
