@@ -16,16 +16,37 @@ export default function SubscriptionsPage() {
   const [busy, setBusy] = useState<string | undefined>();
   const [err, setErr] = useState<string | undefined>();
 
+  // Handle loading and error states properly
+  if (plans.error) {
+    return (
+      <Shell>
+        <PageHeader title="Subscription" subtitle="Manage your subscription plan" />
+        <div className="mb-4">
+          <ErrorBox message={`Failed to load plans: ${plans.error.message}`} />
+        </div>
+      </Shell>
+    );
+  }
+
   async function checkout(planId: string) {
     setBusy(planId); setErr(undefined);
     try {
       const res = await api<any>("/api/v1/subscriptions/checkout", { body: { plan_id: planId } });
       if (res?.url) window.location.href = res.url;
-    } catch (e) { setErr((e as Error).message); } finally { setBusy(undefined); }
+    } catch (e) { 
+      setErr((e as Error).message); 
+    } finally { 
+      setBusy(undefined); 
+    }
   }
+  
   async function portal() {
-    const res = await api<any>("/api/v1/subscriptions/portal", { method: "POST" });
-    if (res?.url) window.location.href = res.url;
+    try {
+      const res = await api<any>("/api/v1/subscriptions/portal", { method: "POST" });
+      if (res?.url) window.location.href = res.url;
+    } catch (e) {
+      setErr(`Failed to open billing portal: ${(e as Error).message}`);
+    }
   }
 
   return (
