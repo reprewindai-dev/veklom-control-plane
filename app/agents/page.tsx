@@ -149,7 +149,7 @@ export default function AgentsPage() {
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-semibold text-white">Agent Details</h2>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost">
                       <Settings className="w-4 h-4" />
                     </Button>
                   </div>

@@ -108,8 +108,8 @@ export function Table<T>({
   );
 }
 
-export function Button({ children, onClick, variant = "primary", type = "button", disabled, loading, className }: {
-  children: ReactNode; onClick?: () => void; variant?: "primary" | "ghost" | "danger"; type?: "button" | "submit"; disabled?: boolean; loading?: boolean; className?: string;
+export function Button({ children, onClick, variant = "primary", type = "button", disabled, loading, className, size }: {
+  children: ReactNode; onClick?: () => void; variant?: "primary" | "ghost" | "danger" | "outline"; type?: "button" | "submit"; disabled?: boolean; loading?: boolean; className?: string; size?: "sm" | "md" | "lg";
 }) {
   return (
     <button
@@ -119,6 +119,7 @@ export function Button({ children, onClick, variant = "primary", type = "button"
         variant === "primary" && "btn-primary",
         variant === "ghost" && "btn-ghost",
         variant === "danger" && "bg-accent-red/20 hover:bg-accent-red/30 text-accent-red border border-accent-red/40",
+        variant === "outline" && "bg-transparent hover:bg-white/5 text-ink-200 border border-white/20",
         className
       )}
     >

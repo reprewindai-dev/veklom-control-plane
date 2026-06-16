@@ -22,7 +22,7 @@ import {
   User,
   Key,
   Activity,
-  Audit,
+  ClipboardList,
   Scale,
   FileSearch,
   Settings,
@@ -516,7 +516,7 @@ export default function TrustCenterPage() {
                     Generate Report
                   </Button>
                   <Button variant="outline" size="sm" className="w-full justify-start">
-                    <Audit className="w-4 h-4 mr-2" />
+                    <ClipboardList className="w-4 h-4 mr-2" />
                     Run Assessment
                   </Button>
                   <Button variant="outline" size="sm" className="w-full justify-start">
