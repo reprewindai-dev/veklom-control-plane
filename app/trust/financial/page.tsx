@@ -33,8 +33,8 @@ export default function FinancialDataPlanePage() {
   const fetchFinancialData = async () => {
     try {
       const [balanceData, txData] = await Promise.all([
-        api<any>('/api/v1/billing/wallet/balance').catch(() => ({ balance_usd: 124.50 })),
-        api<any>('/api/v1/billing/transactions').catch(() => [])
+        api<any>('/api/v1/wallet/balance').catch(() => ({ balance_usd: 124.50 })),
+        api<any>('/api/v1/wallet/transactions').catch(() => [])
       ]);
       setBalance(balanceData.balance_usd ?? 124.50);
       setTransactions(Array.isArray(txData) ? txData : generateDemoTransactions());
@@ -80,7 +80,7 @@ export default function FinancialDataPlanePage() {
 
   const handleTopup = async () => {
     try {
-      const data = await api<any>('/api/v1/billing/topup', {
+      const data = await api<any>('/api/v1/wallet/topup/checkout', {
         method: 'POST',
         body: { amount: 50.00 }
       }).catch(() => ({ balance_usd: balance + 50.00 }));

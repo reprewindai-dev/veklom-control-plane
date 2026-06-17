@@ -261,7 +261,7 @@ export function useBilling() {
 
   const getBalance = useCallback(async () => {
     return request<WalletBalance>(
-      '/api/v1/billing/wallet/balance'
+      '/api/v1/wallet/balance'
     );
   }, [request]);
 
