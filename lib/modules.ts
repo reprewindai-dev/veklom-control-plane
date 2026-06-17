@@ -30,7 +30,7 @@ export const MODULES: ModuleDef[] = [
   { slug: "autonomous", label: "Autonomous Jobs", href: "/autonomous", group: "run", minTier: "pro", description: "Execute and monitor autonomous runs.", icon: "Bot", sidebar: false },
 
   // 4. 📊 API Benchmarks & Trust Rankings
-  { slug: "benchmarks", label: "API Trust Rankings", href: "/benchmarks", group: "marketplace", minTier: "free", description: "Sovereign-compliance API trust rankings and Polymarket-style SLA prediction markets.", icon: "ActivitySquare", sidebar: true },
+  { slug: "benchmarks", label: "IronGrid Benchmark", href: "/benchmarks", group: "marketplace", minTier: "free", description: "VABP-certified API trust leaderboard, Gemini MCPAPI compiler, and SLA staking markets.", icon: "ActivitySquare", sidebar: true },
   { slug: "benchmarks-arena", label: "Authority Arena", href: "/benchmarks/arena", group: "marketplace", minTier: "free", description: "Interactive agent character creator and consensus pipeline playground.", icon: "Gamepad2", sidebar: false },
   { slug: "benchmarks-discovery", label: "Veklom Discovery", href: "/benchmarks/discovery", group: "marketplace", minTier: "free", description: "x402 payments, ACP agents, Base MCP wallet, ENS resolution, on-chain reputation ledger.", icon: "Globe2", sidebar: false },
   { slug: "benchmarks-runtime-lab", label: "Gateway Trust Contract Lab", href: "/benchmarks/runtime-lab", group: "marketplace", minTier: "free", description: "7-step deterministic pipeline, EAT token signing, policy presets, and cryptographic evidence ledger.", icon: "ShieldCheck", sidebar: false },
