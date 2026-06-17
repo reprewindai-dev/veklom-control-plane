@@ -9,7 +9,7 @@ const BACKEND_URL = process.env.BACKEND_URL || "https://veklom.com";
 
 const nextConfig = {
   reactStrictMode: true,
-  output: "export",
+  output: "standalone",
   basePath: "/control-plane-next",
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },

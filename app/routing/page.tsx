@@ -11,6 +11,7 @@ import {
 } from "@/components/telemetry";
 import { unwrapList } from "@/types/api";
 import { Network, Sparkles, Calculator } from "lucide-react";
+import GradientFieldCanvas from "@/components/telemetry/GradientFieldCanvas";
 
 const STRATEGIES = [
   { value: "cost_optimized", label: "Cost optimized — cheapest meeting quality floor" },
@@ -77,6 +78,9 @@ export default function RoutingPage() {
           subtitle="Simulate provider selection, predict cost before you commit, and govern the model stack — Ollama-first with policy-gated cloud burst."
           pills={<><Pill tone="amber">Ollama primary</Pill><Pill tone="cyan">Groq fallback</Pill><Pill tone="green" dot>Circuit closed</Pill></>}
         />
+
+        {/* Embedded Gradient Field Canvas */}
+        <GradientFieldCanvas />
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
           <StatTile label="Routing tier" icon={<Network size={12} />} value={tier.data?.tier || tier.data?.name || "—"} loading={tier.isLoading} />

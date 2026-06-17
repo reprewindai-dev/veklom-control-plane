@@ -595,15 +595,21 @@ const VeklomDiscoveryProduction = () => {
             </div>
             <div className="flex items-center gap-4">
               <button
-                onClick={connectWallet}
-                className={`px-4 py-2 rounded-lg font-bold text-sm transition ${
+                onClick={async () => {
+                  const btn = document.getElementById('base-connect-btn');
+                  if(btn) btn.innerHTML = '<span class="animate-pulse">Connecting...</span>';
+                  await new Promise(r => setTimeout(r, 800));
+                  connectWallet();
+                }}
+                id="base-connect-btn"
+                className={`px-5 py-2.5 rounded-md font-bold text-sm transition-all shadow-lg ${
                   wallet?.connected
-                    ? 'bg-green-900/30 border border-green-700 text-green-400'
-                    : 'bg-blue-900/30 border border-blue-700 text-blue-400 hover:bg-blue-900/50'
+                    ? 'bg-blue-600 border border-blue-500 text-white shadow-blue-500/20'
+                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border border-blue-400/50 text-white shadow-blue-500/20'
                 }`}
               >
                 <Wallet className="w-4 h-4 inline mr-2" />
-                {wallet?.connected ? 'Connected' : 'Connect Base'}
+                {wallet?.connected ? 'Base Mainnet Connected' : 'Connect Base Mainnet'}
               </button>
               <div className="text-right">
                 <p className="text-3xl font-bold text-blue-400">{stats?.trustScore}</p>

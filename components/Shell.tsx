@@ -15,7 +15,7 @@ const GROUP_TITLES: Record<string, string> = {
   overview: "Network",
   build: "Build",
   run: "Run",
-  marketplace: "Exchange",
+  marketplace: "API Benchmarks",
   govern: "Zero-Trust",
   workspace: "Treasury",
   admin: "Global",

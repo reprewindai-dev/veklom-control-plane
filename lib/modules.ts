@@ -34,9 +34,6 @@ export const MODULES: ModuleDef[] = [
   { slug: "benchmarks-arena", label: "Authority Arena", href: "/benchmarks/arena", group: "marketplace", minTier: "free", description: "Interactive agent character creator and consensus pipeline playground.", icon: "Gamepad2", sidebar: false },
   { slug: "benchmarks-discovery", label: "Veklom Discovery", href: "/benchmarks/discovery", group: "marketplace", minTier: "free", description: "x402 payments, ACP agents, Base MCP wallet, ENS resolution, on-chain reputation ledger.", icon: "Globe2", sidebar: false },
   { slug: "benchmarks-runtime-lab", label: "Gateway Trust Contract Lab", href: "/benchmarks/runtime-lab", group: "marketplace", minTier: "free", description: "7-step deterministic pipeline, EAT token signing, policy presets, and cryptographic evidence ledger.", icon: "ShieldCheck", sidebar: false },
-  { slug: "routing-live", label: "Fault Matrix + SLO-Gate", href: "/routing/live", group: "run", minTier: "free", description: "Chaos injection, Ollama→Groq→Gemini fallback drill, gradient field routing.", icon: "Activity", sidebar: false },
-  { slug: "governance-registry", label: "Sovereign Operator Registry", href: "/governance/registry", group: "govern", minTier: "starter", description: "Immutable trust index, telemetry event publishing, chronological operator history.", icon: "Database", sidebar: false },
-  { slug: "vendor-listings", label: "My APIs", href: "/benchmarks/listings", group: "marketplace", minTier: "starter", description: "Submit and manage benchmarked APIs.", icon: "BarChart", sidebar: false },
 
 
   // 5. ⚖️ Governance & Security
