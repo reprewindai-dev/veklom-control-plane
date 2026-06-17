@@ -22,7 +22,7 @@ const GROUP_TITLES: Record<string, string> = {
 };
 
 // Modules that surface live telemetry — flagged with a LIVE badge in the rail.
-const LIVE_SLUGS = new Set(["dashboard", "usage", "routing", "audit", "pipelines", "playground", "status", "deployments"]);
+const LIVE_SLUGS = new Set(["dashboard", "usage", "routing", "audit", "pipelines", "playground", "status", "deployments", "runtime", "benchmarks", "governance"]);
 
 function Icon({ name, className, size = 16 }: { name: string; className?: string; size?: number }) {
   const C = (Icons as any)[name] || Icons.Circle;

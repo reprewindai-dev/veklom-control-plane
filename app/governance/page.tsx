@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import {
   Shield,
   TrendingUp,
@@ -12,6 +13,9 @@ import {
   Search,
   Filter,
   Copy,
+  ChevronRight,
+  Database,
+  Users,
 } from 'lucide-react';
 
 interface TrustScoreEvent {
@@ -187,6 +191,24 @@ export default function GovernancePage() {
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">🛡️ GOVERNANCE LAYER</h1>
           <p className="text-slate-400">Sovereign operator identity & trust verification</p>
+          {/* Quick links to sub-modules */}
+          <div className="flex flex-wrap gap-3 mt-4">
+            <Link href="/governance/registry" className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-sm text-slate-300 hover:text-white transition">
+              <Database className="w-4 h-4 text-cyan-400" />
+              Sovereign Operator Registry
+              <ChevronRight className="w-3 h-3 opacity-50" />
+            </Link>
+            <Link href="/audit" className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-sm text-slate-300 hover:text-white transition">
+              <Shield className="w-4 h-4 text-emerald-400" />
+              Audit Log
+              <ChevronRight className="w-3 h-3 opacity-50" />
+            </Link>
+            <Link href="/compliance" className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-sm text-slate-300 hover:text-white transition">
+              <Award className="w-4 h-4 text-violet-400" />
+              Compliance Frameworks
+              <ChevronRight className="w-3 h-3 opacity-50" />
+            </Link>
+          </div>
         </div>
 
         {/* Operator Card */}

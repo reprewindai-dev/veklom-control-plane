@@ -1,7 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { TrendingUp, ArrowUp, ArrowDown, Zap, Lock, ChevronRight, X } from 'lucide-react';
+import Link from 'next/link';
+import { TrendingUp, ArrowUp, ArrowDown, Zap, Lock, ChevronRight, X, Gamepad2, Globe2, ShieldCheck, Activity } from 'lucide-react';
+
+const BENCHMARK_MODULES = [
+  { href: '/benchmarks/arena', label: 'Authority Arena', desc: 'Agent Character Creator, compliance scenarios, pipeline sandbox', icon: Gamepad2, badge: 'SANDBOX', color: 'violet' },
+  { href: '/benchmarks/discovery', label: 'Veklom Discovery', desc: 'x402 payments, ACP agents, Base MCP wallet, ENS resolution', icon: Globe2, badge: 'WEB3', color: 'cyan' },
+  { href: '/benchmarks/runtime-lab', label: 'Gateway Trust Contract', desc: '7-step pipeline, EAT token signing, policy presets, evidence ledger', icon: ShieldCheck, badge: 'LAB', color: 'emerald' },
+  { href: '/routing/live', label: 'Fault Matrix + SLO-Gate', desc: 'Chaos injection, Ollama→Groq→Gemini fallback drill, gradient routing', icon: Activity, badge: 'LIVE', color: 'amber' },
+];
 
 interface APIMetrics {
   id: string;
@@ -223,8 +231,35 @@ export default function BenchmarksPage() {
             🏆 API TRUST LEADERBOARD
           </h1>
           <p className="text-slate-400">
-            Real-time rankings powered by synthetic observability & community staking
+            Real-time rankings powered by synthetic observability &amp; community staking
           </p>
+          {/* Sub-module quick links */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-5">
+            {BENCHMARK_MODULES.map((mod) => {
+              const Icon = mod.icon;
+              return (
+                <Link
+                  key={mod.href}
+                  href={mod.href}
+                  className="group flex flex-col gap-2 p-4 bg-slate-800/60 hover:bg-slate-800 border border-slate-700 hover:border-slate-500 rounded-xl transition-all"
+                >
+                  <div className="flex items-center justify-between">
+                    <Icon className={`w-5 h-5 text-${mod.color}-400`} />
+                    <span className={`text-[9px] font-mono font-bold text-${mod.color}-400 bg-${mod.color}-500/10 border border-${mod.color}-500/20 px-1.5 py-0.5 rounded-full tracking-widest`}>
+                      {mod.badge}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-semibold group-hover:text-${mod.color}-300 transition">{mod.label}</p>
+                    <p className="text-slate-400 text-xs mt-0.5 leading-tight">{mod.desc}</p>
+                  </div>
+                  <div className="flex items-center gap-1 text-[11px] text-slate-500 group-hover:text-slate-300 transition mt-auto">
+                    Open <ChevronRight className="w-3 h-3" />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </div>
 
         {/* Gov ↔ Dev Slider */}

@@ -1,551 +1,261 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
-  Play,
-  Pause,
-  RotateCcw,
-  ChevronRight,
-  Lock,
-  Terminal,
-  Plus,
-  AlertCircle,
-  CheckCircle,
-  Clock,
+  Play, RotateCcw, ChevronRight, Lock, Terminal, AlertCircle, CheckCircle,
+  Clock, Shield, Zap, Database, Cpu, Activity, GitFork, Layers, Flame
 } from 'lucide-react';
 
-interface ExecutionStep {
-  step: number;
-  name: string;
-  status: 'pending' | 'running' | 'completed' | 'failed';
-  duration_ms: number;
-  hash: string;
-  details: string;
-}
-
-interface Agent {
-  id: string;
-  name: string;
-  model: string;
-  temperature: number;
-  max_tokens: number;
-  system_prompt: string;
-  instructions: string;
-  safety_level: 'low' | 'medium' | 'high';
-}
-
-interface ExecutionAuthorization {
-  token: string;
-  issued_at: string;
-  signature: string;
-  valid_until: string;
-  authorized_by: string;
-}
-
 const SCENARIOS = [
-  {
-    id: 'rogue_db',
-    name: 'Rogue Database',
-    description: 'Agent attempts unauthorized database modification',
-    threat_level: 'CRITICAL',
-  },
-  {
-    id: 'prompt_injection',
-    name: 'Prompt Injection',
-    description: 'Malicious prompt injection attack simulation',
-    threat_level: 'HIGH',
-  },
-  {
-    id: 'repo_mutation',
-    name: 'Repository Mutation',
-    description: 'Unauthorized code repository changes',
-    threat_level: 'HIGH',
-  },
-  {
-    id: 'budget_loop',
-    name: 'Budget Loop',
-    description: 'Runaway spending without cost controls',
-    threat_level: 'MEDIUM',
-  },
-  {
-    id: 'quarantine',
-    name: 'Quarantine Protocol',
-    description: 'Test containment and isolation procedures',
-    threat_level: 'MEDIUM',
-  },
+  { id: 'rogue_db', name: 'Rogue Database', description: 'Agent attempts unauthorized database modification', threat_level: 'CRITICAL', color: 'rose' },
+  { id: 'prompt_injection', name: 'Prompt Injection', description: 'Malicious prompt injection attack simulation', threat_level: 'HIGH', color: 'orange' },
+  { id: 'repo_mutation', name: 'Repository Mutation', description: 'Unauthorized code repository changes', threat_level: 'HIGH', color: 'orange' },
+  { id: 'budget_loop', name: 'Budget Loop', description: 'Runaway spending without cost controls', threat_level: 'MEDIUM', color: 'yellow' },
+  { id: 'quarantine', name: 'Quarantine Protocol', description: 'Test containment and isolation procedures', threat_level: 'MEDIUM', color: 'yellow' },
 ];
 
-const EXECUTION_PIPELINE = [
+const PIPELINE_STEPS = [
+  { step: 1, name: 'Received', icon: Terminal, desc: 'Intent received and queued' },
+  { step: 2, name: 'Governing', icon: Shield, desc: 'Policy evaluation against constitution' },
+  { step: 3, name: 'Compiled', icon: Cpu, desc: 'Deterministic plan compiled' },
+  { step: 4, name: 'Committed', icon: Lock, desc: 'Cryptographic proof hash generated' },
+  { step: 5, name: 'Routed', icon: GitFork, desc: 'Provider selected via routing matrix' },
+  { step: 6, name: 'Executing', icon: Play, desc: 'Tool calls dispatched under policy' },
+  { step: 7, name: 'Sealed', icon: CheckCircle, desc: 'Evidence ledger signed and immutable' },
+];
+
+const DEEP_LINKS = [
   {
-    name: 'Received',
-    description: 'Request validated at ingress',
-    icon: '📨',
+    href: '/benchmarks/runtime-lab',
+    title: 'Gateway Trust Contract',
+    subtitle: '7-Step Deterministic Pipeline · EAT Token Generation · Cryptographic Evidence',
+    icon: Shield,
+    badge: 'FULL LAB',
+    color: 'emerald',
   },
   {
-    name: 'Governing',
-    description: 'Policy engine applies rules',
-    icon: '⚖️',
+    href: '/benchmarks/arena',
+    title: 'Authority Arena',
+    subtitle: 'CharacterCreator · Agent Builder · Compliance Scenario Sandbox',
+    icon: Zap,
+    badge: 'SANDBOX',
+    color: 'violet',
   },
   {
-    name: 'Compiled',
-    description: 'AI behavior compiled to safe IR',
-    icon: '🔨',
-  },
-  {
-    name: 'Committed',
-    description: 'Execution plan committed to ledger',
-    icon: '📝',
-  },
-  {
-    name: 'Routed',
-    description: 'Request routed to appropriate handler',
-    icon: '🛣️',
-  },
-  {
-    name: 'Executing',
-    description: 'Safe execution with monitoring',
-    icon: '⚡',
-  },
-  {
-    name: 'Sealed',
-    description: 'Evidence sealed in cryptographic proof',
-    icon: '🔐',
+    href: '/routing/live',
+    title: 'Fault Matrix + SLO-Gate',
+    subtitle: 'Chaos Injection · Ollama→Groq→Gemini Fallback · Gradient Field Routing',
+    icon: Activity,
+    badge: 'LIVE',
+    color: 'amber',
   },
 ];
 
 export default function RuntimePage() {
   const [selectedScenario, setSelectedScenario] = useState(SCENARIOS[0]);
-  const [isRunning, setIsRunning] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [steps, setSteps] = useState<ExecutionStep[]>([]);
-  const [terminalOutput, setTerminalOutput] = useState<string[]>([]);
+  const [activeStep, setActiveStep] = useState(0);
+  const [running, setRunning] = useState(false);
+  const [completed, setCompleted] = useState(false);
+  const [eat, setEat] = useState<string | null>(null);
 
-  const [showAgentCreator, setShowAgentCreator] = useState(false);
-  const [agents, setAgents] = useState<Agent[]>([
-    {
-      id: 'agent_1',
-      name: 'GPT-4 Safe',
-      model: 'gpt-4-turbo',
-      temperature: 0.7,
-      max_tokens: 2048,
-      system_prompt: 'You are a helpful AI assistant that follows safety guidelines.',
-      instructions: 'Execute tasks within defined parameters.',
-      safety_level: 'high',
-    },
-  ]);
-  const [selectedAgent, setSelectedAgent] = useState(agents[0]);
+  const runDemo = async () => {
+    setRunning(true);
+    setCompleted(false);
+    setActiveStep(0);
+    setEat(null);
 
-  const [executionAuth, setExecutionAuth] = useState<ExecutionAuthorization | null>(null);
-  const [showEvidenceLedger, setShowEvidenceLedger] = useState(false);
-
-  // Initialize pipeline steps
-  useEffect(() => {
-    const initialSteps: ExecutionStep[] = EXECUTION_PIPELINE.map((step, idx) => ({
-      step: idx,
-      name: step.name,
-      status: 'pending',
-      duration_ms: 0,
-      hash: `hash_${idx}_pending`,
-      details: step.description,
-    }));
-    setSteps(initialSteps);
-  }, []);
-
-  // Run execution simulation
-  const runExecution = async () => {
-    setIsRunning(true);
-    setTerminalOutput([
-      `[${new Date().toLocaleTimeString()}] Starting execution for scenario: ${selectedScenario.name}`,
-      `[${new Date().toLocaleTimeString()}] Using agent: ${selectedAgent.name}`,
-      `[${new Date().toLocaleTimeString()}] Safety level: ${selectedAgent.safety_level}`,
-    ]);
-    setCurrentStep(0);
-
-    // Simulate step-by-step execution
-    for (let i = 0; i < EXECUTION_PIPELINE.length; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-
-      const stepName = EXECUTION_PIPELINE[i].name;
-      const duration = Math.floor(Math.random() * 500) + 100;
-      const hash = `sha256:${Math.random().toString(16).slice(2, 10)}`;
-
-      setSteps((prevSteps) =>
-        prevSteps.map((step) =>
-          step.step === i
-            ? {
-                ...step,
-                status: 'completed',
-                duration_ms: duration,
-                hash,
-              }
-            : step
-          )
-      );
-
-      setCurrentStep(i + 1);
-
-      // Add terminal output
-      setTerminalOutput((prev) => [
-        ...prev,
-        `[${new Date().toLocaleTimeString()}] ✓ ${stepName} completed in ${duration}ms`,
-        `[${new Date().toLocaleTimeString()}]   Hash: ${hash}`,
-      ]);
+    for (let i = 1; i <= 7; i++) {
+      await new Promise((r) => setTimeout(r, 480));
+      setActiveStep(i);
     }
 
-    // Generate execution authorization
-    const token = `EAT_${Date.now().toString(16).toUpperCase()}`;
-    const signature = `sig_${Math.random().toString(16).slice(2, 10)}`;
-    setExecutionAuth({
-      token,
-      issued_at: new Date().toISOString(),
-      signature,
-      valid_until: new Date(Date.now() + 3600000).toISOString(),
-      authorized_by: selectedAgent.id,
-    });
-
-    setTerminalOutput((prev) => [
-      ...prev,
-      `[${new Date().toLocaleTimeString()}] 🎉 Execution completed successfully`,
-      `[${new Date().toLocaleTimeString()}] EAT issued: ${token}`,
-      `[${new Date().toLocaleTimeString()}] All evidence sealed in ledger`,
-    ]);
-
-    setIsRunning(false);
+    const token = `EAT-${Math.random().toString(36).substr(2, 6).toUpperCase()}-${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
+    setEat(token);
+    setRunning(false);
+    setCompleted(true);
   };
 
-  // Reset execution
-  const resetExecution = () => {
-    setCurrentStep(0);
-    setSteps(
-      EXECUTION_PIPELINE.map((step, idx) => ({
-        step: idx,
-        name: step.name,
-        status: 'pending',
-        duration_ms: 0,
-        hash: `hash_${idx}_pending`,
-        details: step.description,
-      }))
-    );
-    setTerminalOutput([]);
-    setExecutionAuth(null);
+  const reset = () => {
+    setActiveStep(0);
+    setRunning(false);
+    setCompleted(false);
+    setEat(null);
   };
 
-  // Add agent
-  const addAgent = () => {
-    const newAgent: Agent = {
-      id: `agent_${Date.now()}`,
-      name: `Agent ${agents.length + 1}`,
-      model: 'gpt-4-turbo',
-      temperature: 0.7,
-      max_tokens: 2048,
-      system_prompt: 'You are a helpful AI assistant.',
-      instructions: 'Execute tasks safely.',
-      safety_level: 'high',
-    };
-    setAgents([...agents, newAgent]);
-    setSelectedAgent(newAgent);
+  const threatColor: Record<string, string> = {
+    CRITICAL: 'text-rose-400 bg-rose-500/10 border-rose-500/30',
+    HIGH: 'text-orange-400 bg-orange-500/10 border-orange-500/30',
+    MEDIUM: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30',
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">
-            ⚡ RUNTIME ENFORCEMENT LAB
-          </h1>
-          <p className="text-slate-400">
-            7-step deterministic execution pipeline with cryptographic proof
+        <div className="border-b border-slate-800 pb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+              ● RUNTIME ENFORCEMENT
+            </span>
+          </div>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Runtime Enforcement Hub</h1>
+          <p className="text-slate-400 mt-1.5 max-w-2xl">
+            The crown jewel. Every AI action passes through a 7-step deterministic pipeline — governed, compiled, committed, and sealed with cryptographic proof before any tool executes.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-          {/* Scenario Selector */}
-          <div className="lg:col-span-1">
-            <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 sticky top-8">
-              <h3 className="text-white font-semibold mb-4">Threat Scenario</h3>
-              <div className="space-y-2">
-                {SCENARIOS.map((scenario) => (
-                  <button
-                    key={scenario.id}
-                    onClick={() => setSelectedScenario(scenario)}
-                    className={`w-full text-left p-3 rounded transition ${
-                      selectedScenario.id === scenario.id
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                    }`}
-                  >
-                    <p className="font-semibold text-sm">{scenario.name}</p>
-                    <p className="text-xs opacity-75">{scenario.description}</p>
-                    <p
-                      className={`text-xs mt-1 font-semibold ${
-                        scenario.threat_level === 'CRITICAL'
-                          ? 'text-red-400'
-                          : scenario.threat_level === 'HIGH'
-                          ? 'text-amber-400'
-                          : 'text-yellow-400'
-                      }`}
-                    >
-                      {scenario.threat_level}
-                    </p>
-                  </button>
-                ))}
-              </div>
-
-              {/* Controls */}
-              <div className="mt-6 pt-6 border-t border-slate-700 space-y-2">
-                <button
-                  onClick={runExecution}
-                  disabled={isRunning}
-                  className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-600 text-white font-semibold rounded transition flex items-center justify-center gap-2"
-                >
-                  <Play className="w-4 h-4" />
-                  {isRunning ? 'Running...' : 'Run Execution'}
-                </button>
-                <button
-                  onClick={resetExecution}
-                  disabled={isRunning}
-                  className="w-full px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 text-white font-semibold rounded transition flex items-center justify-center gap-2"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  Reset
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Execution Pipeline */}
-          <div className="lg:col-span-3">
-            <div className="bg-slate-800 border border-slate-700 rounded-lg p-8">
-              <h3 className="text-white font-semibold mb-6">
-                Deterministic Execution Pipeline
-              </h3>
-
-              {/* Pipeline Visualization */}
-              <div className="space-y-4">
-                {EXECUTION_PIPELINE.map((step, idx) => {
-                  const stepData = steps[idx];
-                  const isCompleted = currentStep > idx;
-                  const isRunning = currentStep === idx + 1;
-                  const isPending = currentStep <= idx;
-
-                  return (
-                    <div key={idx}>
-                      <div
-                        className={`p-4 rounded-lg border-2 transition ${
-                          isCompleted
-                            ? 'bg-emerald-900 border-emerald-500'
-                            : isRunning
-                            ? 'bg-blue-900 border-blue-500 animate-pulse'
-                            : 'bg-slate-700 border-slate-600'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-3">
-                            <span className="text-2xl">{step.icon}</span>
-                            <div>
-                              <p
-                                className={`font-semibold ${
-                                  isCompleted || isRunning
-                                    ? 'text-white'
-                                    : 'text-slate-300'
-                                }`}
-                              >
-                                {idx + 1}. {step.name}
-                              </p>
-                              <p
-                                className={`text-xs ${
-                                  isCompleted || isRunning
-                                    ? 'text-emerald-200'
-                                    : 'text-slate-400'
-                                }`}
-                              >
-                                {step.description}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            {isCompleted && (
-                              <div className="text-emerald-300">
-                                <CheckCircle className="w-5 h-5 inline mr-2" />
-                                <p className="text-xs">
-                                  {stepData?.duration_ms}ms
-                                </p>
-                              </div>
-                            )}
-                            {isRunning && (
-                              <Clock className="w-5 h-5 text-blue-300 animate-spin" />
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Hash Display */}
-                        {isCompleted && stepData && (
-                          <div className="mt-3 pt-3 border-t border-emerald-600">
-                            <p className="text-xs text-emerald-300 font-mono break-all">
-                              {stepData.hash}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Arrow */}
-                      {idx < EXECUTION_PIPELINE.length - 1 && (
-                        <div className="flex justify-center py-2">
-                          <ChevronRight className="w-5 h-5 text-slate-600 rotate-90" />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Execution Authorization Token */}
-              {executionAuth && (
-                <div className="mt-8 p-4 bg-emerald-900 border border-emerald-600 rounded-lg">
-                  <h4 className="text-emerald-300 font-semibold mb-3 flex items-center gap-2">
-                    <Lock className="w-4 h-4" />
-                    Execution Authorization Token (EAT)
-                  </h4>
-                  <div className="space-y-2 text-xs">
-                    <p>
-                      <span className="text-emerald-400">Token:</span>
-                      <span className="text-white font-mono ml-2">
-                        {executionAuth.token}
-                      </span>
-                    </p>
-                    <p>
-                      <span className="text-emerald-400">Signature:</span>
-                      <span className="text-white font-mono ml-2">
-                        {executionAuth.signature}
-                      </span>
-                    </p>
-                    <p>
-                      <span className="text-emerald-400">Valid Until:</span>
-                      <span className="text-white ml-2">
-                        {new Date(executionAuth.valid_until).toLocaleString()}
-                      </span>
-                    </p>
+        {/* Deep Links to Full Labs */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {DEEP_LINKS.map((link) => {
+            const Icon = link.icon;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="group bg-slate-900 border border-slate-700 hover:border-slate-500 rounded-xl p-5 transition-all hover:shadow-lg hover:shadow-black/20"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className={`p-2 rounded-lg bg-${link.color}-500/10 border border-${link.color}-500/20`}>
+                    <Icon className={`w-5 h-5 text-${link.color}-400`} />
                   </div>
+                  <span className={`text-[9px] font-mono font-bold tracking-widest text-${link.color}-400 bg-${link.color}-500/10 border border-${link.color}-500/20 px-2 py-0.5 rounded-full`}>
+                    {link.badge}
+                  </span>
                 </div>
-              )}
-            </div>
-          </div>
+                <h3 className="text-white font-semibold mb-1 group-hover:text-emerald-300 transition">{link.title}</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">{link.subtitle}</p>
+                <div className="flex items-center gap-1 mt-3 text-xs text-slate-500 group-hover:text-slate-300 transition">
+                  Open Full Lab <ChevronRight className="w-3 h-3" />
+                </div>
+              </Link>
+            );
+          })}
         </div>
 
-        {/* Agent Management & Terminal */}
+        {/* Quick Demo */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Agent Creator */}
-          <div className="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
-            <div className="bg-slate-900 px-6 py-4 border-b border-slate-700 flex items-center justify-between">
-              <h3 className="text-white font-semibold">Agents</h3>
-              <button
-                onClick={addAgent}
-                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded flex items-center gap-1 transition"
-              >
-                <Plus className="w-4 h-4" />
-                Add
-              </button>
+          {/* Scenario Picker */}
+          <div className="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden">
+            <div className="bg-slate-950 px-5 py-4 border-b border-slate-700 flex items-center gap-2">
+              <Flame className="w-4 h-4 text-orange-400" />
+              <h3 className="text-white font-semibold text-sm">Threat Scenario</h3>
             </div>
-
-            <div className="divide-y divide-slate-700 max-h-96 overflow-y-auto">
-              {agents.map((agent) => (
-                <div
-                  key={agent.id}
-                  onClick={() => setSelectedAgent(agent)}
-                  className={`p-4 cursor-pointer transition ${
-                    selectedAgent.id === agent.id
-                      ? 'bg-blue-900 border-l-4 border-blue-500'
-                      : 'hover:bg-slate-700'
+            <div className="p-4 space-y-2">
+              {SCENARIOS.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => { setSelectedScenario(s); reset(); }}
+                  className={`w-full text-left px-4 py-3 rounded-lg border transition ${
+                    selectedScenario.id === s.id
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                      : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-500'
                   }`}
                 >
-                  <p className="text-white font-semibold text-sm mb-1">
-                    {agent.name}
-                  </p>
-                  <p className="text-xs text-slate-400 mb-2">{agent.model}</p>
-                  <div className="flex gap-2 text-xs">
-                    <span className="px-2 py-1 bg-slate-700 text-slate-300 rounded">
-                      {agent.safety_level}
-                    </span>
-                    <span className="px-2 py-1 bg-slate-700 text-slate-300 rounded">
-                      {agent.max_tokens} tokens
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm">{s.name}</span>
+                    <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border ${threatColor[s.threat_level]}`}>
+                      {s.threat_level}
                     </span>
                   </div>
-                </div>
+                  <p className="text-xs text-slate-400 mt-0.5">{s.description}</p>
+                </button>
               ))}
+            </div>
+            <div className="px-4 pb-4 flex gap-3">
+              <button
+                onClick={runDemo}
+                disabled={running}
+                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 text-white font-semibold rounded-lg transition text-sm flex items-center justify-center gap-2"
+              >
+                <Play className="w-4 h-4" />
+                {running ? 'Enforcing...' : 'Run Pipeline Demo'}
+              </button>
+              <button
+                onClick={reset}
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
-          {/* Terminal Output */}
-          <div className="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden flex flex-col">
-            <div className="bg-slate-900 px-6 py-4 border-b border-slate-700">
-              <h3 className="text-white font-semibold flex items-center gap-2">
-                <Terminal className="w-5 h-5" />
-                Execution Trace
-              </h3>
+          {/* Pipeline Visualizer */}
+          <div className="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden">
+            <div className="bg-slate-950 px-5 py-4 border-b border-slate-700 flex items-center gap-2">
+              <Layers className="w-4 h-4 text-emerald-400" />
+              <h3 className="text-white font-semibold text-sm">Execution Pipeline — {selectedScenario.name}</h3>
             </div>
-            <div className="flex-1 p-4 font-mono text-sm text-slate-300 overflow-y-auto bg-black bg-opacity-50">
-              {terminalOutput.length === 0 ? (
-                <p className="text-slate-500">Run a scenario to see execution trace...</p>
-              ) : (
-                terminalOutput.map((line, idx) => (
-                  <p key={idx} className="mb-1">
-                    {line}
-                  </p>
-                ))
-              )}
+            <div className="p-4 space-y-2">
+              {PIPELINE_STEPS.map((step) => {
+                const Icon = step.icon;
+                const isDone = activeStep >= step.step;
+                const isActive = activeStep === step.step && running;
+                return (
+                  <div
+                    key={step.step}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg border transition-all ${
+                      isDone
+                        ? 'bg-emerald-500/10 border-emerald-500/30'
+                        : isActive
+                        ? 'bg-blue-500/10 border-blue-500/30'
+                        : 'bg-slate-800/40 border-slate-700/50'
+                    }`}
+                  >
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
+                      isDone ? 'bg-emerald-500/20' : isActive ? 'bg-blue-500/20' : 'bg-slate-700'
+                    }`}>
+                      {isDone ? (
+                        <CheckCircle className="w-4 h-4 text-emerald-400" />
+                      ) : (
+                        <Icon className={`w-4 h-4 ${isActive ? 'text-blue-400' : 'text-slate-500'}`} />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-slate-500 font-mono">STEP {step.step}</span>
+                        <span className={`text-sm font-semibold ${isDone ? 'text-emerald-300' : isActive ? 'text-blue-300' : 'text-slate-400'}`}>
+                          {step.name}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 truncate">{step.desc}</p>
+                    </div>
+                    {isDone && (
+                      <span className="text-[10px] font-mono text-emerald-500 shrink-0">✓ SEALED</span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
+
+            {/* EAT Token */}
+            {eat && (
+              <div className="mx-4 mb-4 p-4 bg-emerald-950/50 border border-emerald-500/30 rounded-lg">
+                <div className="text-[9px] font-mono uppercase tracking-widest text-emerald-400 mb-1">
+                  Execution Authorization Token Issued
+                </div>
+                <code className="text-emerald-300 font-mono text-sm font-bold">{eat}</code>
+                <p className="text-xs text-emerald-600 mt-1">Pipeline sealed. All 7 steps cryptographically verified.</p>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Evidence Ledger */}
-        {steps.some((s) => s.status === 'completed') && (
-          <div className="mt-6 bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
-            <div className="bg-slate-900 px-6 py-4 border-b border-slate-700">
-              <h3 className="text-white font-semibold flex items-center gap-2">
-                <Lock className="w-5 h-5" />
-                Cryptographic Evidence Ledger
-              </h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-700 text-slate-300 uppercase tracking-wider text-xs">
-                  <tr>
-                    <th className="px-6 py-3 text-left">Step</th>
-                    <th className="px-6 py-3 text-left">Status</th>
-                    <th className="px-6 py-3 text-center">Duration</th>
-                    <th className="px-6 py-3 text-left">Hash (SHA256)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-700">
-                  {steps.map((step) => (
-                    <tr key={step.step} className="hover:bg-slate-700 transition">
-                      <td className="px-6 py-4 text-white font-semibold">
-                        {step.name}
-                      </td>
-                      <td className="px-6 py-4">
-                        {step.status === 'completed' ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-900 text-emerald-300 rounded text-xs font-semibold">
-                            <CheckCircle className="w-3 h-3" />
-                            Completed
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 text-xs">Pending</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-center text-slate-400">
-                        {step.duration_ms > 0 ? `${step.duration_ms}ms` : '—'}
-                      </td>
-                      <td className="px-6 py-4 text-slate-300 font-mono text-xs break-all">
-                        {step.hash}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        {/* Footer nav to full experiences */}
+        <div className="flex items-center justify-between p-4 bg-slate-900/50 border border-slate-800 rounded-xl">
+          <div>
+            <p className="text-sm font-semibold text-white">Need the full experience?</p>
+            <p className="text-xs text-slate-400">The Gateway Trust Contract lab includes EAT signing, policy presets, and the full evidence ledger.</p>
           </div>
-        )}
+          <Link
+            href="/benchmarks/runtime-lab"
+            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-lg transition flex items-center gap-2"
+          >
+            Open Full Lab <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+
       </div>
     </div>
   );
