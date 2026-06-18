@@ -10,7 +10,6 @@ const BACKEND_URL = process.env.BACKEND_URL || "https://veklom.com";
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
-  basePath: "/control-plane-next",
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
   trailingSlash: true,
@@ -18,7 +17,6 @@ const nextConfig = {
   images: { unoptimized: true },
   env: {
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || "",
-    NEXT_PUBLIC_BASE_PATH: "/control-plane-next",
   },
   async rewrites() {
     return [
