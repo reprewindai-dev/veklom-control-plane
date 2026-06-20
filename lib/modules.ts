@@ -30,7 +30,12 @@ export const MODULES: ModuleDef[] = [
   { slug: "autonomous", label: "Autonomous Jobs", href: "/autonomous", group: "run", minTier: "pro", description: "Execute and monitor autonomous runs.", icon: "Bot", sidebar: false },
 
   // 4. 📊 API Benchmarks & Trust Rankings
-  { slug: "benchmarks", label: "IronGrid Benchmark", href: "/benchmarks", group: "marketplace", minTier: "free", description: "VABP-certified API trust leaderboard, Gemini MCPAPI compiler, and SLA staking markets.", icon: "ActivitySquare", sidebar: true },
+  { slug: "benchmarks", label: "Nexus Protocol", href: "/benchmarks", group: "marketplace", minTier: "free", description: "VNP-certified API trust leaderboard and SLA staking markets.", icon: "ActivitySquare", sidebar: true },
+  { slug: "benchmarks-pgl", label: "PGL Identity Layer", href: "/benchmarks?tab=trust", group: "marketplace", minTier: "free", description: "PGL Immutable Identity and M2M operations.", icon: "Fingerprint", sidebar: true },
+  { slug: "benchmarks-trust", label: "Trust Node Matrix", href: "/benchmarks?tab=trust", group: "marketplace", minTier: "free", description: "API Trust Leaderboard with radar capabilities.", icon: "Shield", sidebar: true },
+  { slug: "benchmarks-staking", label: "Staking Protocol", href: "/benchmarks?tab=staking", group: "marketplace", minTier: "free", description: "Gamified SLA staking markets.", icon: "BarChart2", sidebar: true },
+  { slug: "benchmarks-consensus", label: "Consensus Vector", href: "/benchmarks?tab=consensus", group: "marketplace", minTier: "free", description: "MCPAPI protocol consensus visualization.", icon: "Network", sidebar: true },
+  
   { slug: "benchmarks-arena", label: "Authority Arena", href: "/benchmarks/arena", group: "marketplace", minTier: "free", description: "Interactive agent character creator and consensus pipeline playground.", icon: "Gamepad2", sidebar: false },
   { slug: "benchmarks-discovery", label: "Veklom Discovery", href: "/benchmarks/discovery", group: "marketplace", minTier: "free", description: "x402 payments, ACP agents, Base MCP wallet, ENS resolution, on-chain reputation ledger.", icon: "Globe2", sidebar: false },
   { slug: "benchmarks-runtime-lab", label: "Gateway Trust Contract Lab", href: "/benchmarks/runtime-lab", group: "marketplace", minTier: "free", description: "7-step deterministic pipeline, EAT token signing, policy presets, and cryptographic evidence ledger.", icon: "ShieldCheck", sidebar: false },
