@@ -1,0 +1,51 @@
+{
+  "x402_version": 2,
+  "provider": "Veklom Control Plane — Sovereign AI Hub",
+  "network": "eip155:8453",
+  "payTo": "0xCC34553b4e6332ffb9C1b61E22436ACA53113D1d",
+  "currency": "USDC",
+  "identity": {
+    "veklom_id_app": "6a20f24cc341f72c2f573eb5",
+    "veklom_id_wallet": "0x3a74772e925b54F7dAD7FD95c9Ba30825033f970",
+    "verification_domain": "veklom-id.vercel.app"
+  },
+  "routes": [
+    {
+      "route": "POST /api/v1/ai/inference",
+      "price": "$0.008",
+      "description": "Policy-gated AI inference. Ollama-first, auto-escalates to Groq/Gemini/OpenAI.",
+      "tags": ["ai", "inference", "governed", "policy", "veklom"]
+    },
+    {
+      "route": "POST /api/v1/gpc/compile",
+      "price": "$0.015",
+      "description": "Compile agent intent into a deterministic governed plan with proof hash.",
+      "tags": ["gpc", "compile", "plan", "governance", "veklom"]
+    },
+    {
+      "route": "POST /api/v1/pipelines/trigger",
+      "price": "$0.025",
+      "description": "Trigger a governed pipeline with budget caps and kill switches.",
+      "tags": ["pipeline", "trigger", "orchestration", "veklom"]
+    },
+    {
+      "route": "GET /api/v1/evidence/export",
+      "price": "$0.005",
+      "description": "Export SHA-256 sealed audit evidence for governed execution.",
+      "tags": ["evidence", "audit", "sha256", "proof", "veklom"]
+    },
+    {
+      "route": "GET /api/v1/compliance/report",
+      "price": "$0.010",
+      "description": "Generate compliance report across SOC2, HIPAA, GDPR, ISO 27001, EU AI Act.",
+      "tags": ["compliance", "soc2", "hipaa", "gdpr", "report", "veklom"]
+    }
+  ],
+  "discovery": {
+    "bazaar": "https://bazaar.cdp.coinbase.com",
+    "mcp_sse": "https://api.veklom.com/mcp/sse",
+    "llms_txt": "https://api.veklom.com/llms.txt",
+    "openapi": "https://api.veklom.com/openapi.json",
+    "veklom_id": "https://veklom-id.vercel.app"
+  }
+}

@@ -55,6 +55,16 @@ export const metadata: Metadata = {
   // Base Network App ID — domain ownership verification for veklom.com
   other: {
     "base:app_id": "6a31ef5406f4fa4223585905",
+    "fc:frame": JSON.stringify({
+      version: "1",
+      name: "Veklom Control Plane",
+      appId: "6a20f24cc341f72c2f573eb5",
+    }),
+    "x402:payTo": "0xCC34553b4e6332ffb9C1b61E22436ACA53113D1d",
+    "x402:network": "eip155:8453",
+    "x402:discovery": "/.well-known/x402.json",
+    "veklom:id-wallet": "0x3a74772e925b54F7dAD7FD95c9Ba30825033f970",
+    "veklom:service": "control-plane",
   },
 };
 
