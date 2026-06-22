@@ -44,7 +44,7 @@ export default function StateVisualizer() {
   // System State
   const [state, setState] = useState<SimSystemState>(() => ({
     tenants: getInitialTenants(),
-    jobs: getInitialJobs(),
+    jobs: Object.fromEntries(getInitialJobs().map(j => [j.jobId, j])),
     jobEvents: [],
     auditBlocks: [],
     redisReservations: {},
@@ -231,7 +231,7 @@ export default function StateVisualizer() {
   const [hoveredJob, setHoveredJob] = useState<SimJob | null>(null);
 
   // Latency metrics calculations over last 100 jobs
-  const last100Jobs = state.jobs.slice(0, 100);
+  const last100Jobs = Object.values(state.jobs).sort((a, b) => b.createdAt - a.createdAt).slice(0, 100);
   const completedWithLatency = last100Jobs.filter((j) => j.latencyMs !== undefined);
   const overallAvgLatency =
     completedWithLatency.length > 0
@@ -917,9 +917,9 @@ export default function StateVisualizer() {
                 <button
                   id="btn-lease-job"
                   onClick={handleWorkerLeaseNext}
-                  disabled={!state.jobs.some((j) => j.status === JobStatus.QUEUED)}
+                  disabled={!Object.values(state.jobs).some((j) => j.status === JobStatus.QUEUED)}
                   className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-none transition-all flex items-center gap-1.5 border shrink-0 cursor-pointer shadow-[2px_2px_0px_rgba(20,20,20,0.1)] ${
-                    state.jobs.some((j) => j.status === JobStatus.QUEUED)
+                    Object.values(state.jobs).some((j) => j.status === JobStatus.QUEUED)
                       ? "bg-[#141414] text-[#E4E3E0] hover:bg-[#E4E3E0] hover:text-[#141414] border-[#141414]"
                       : "bg-white text-slate-400 border-[#141414]/15 cursor-not-allowed"
                   }`}
@@ -931,12 +931,12 @@ export default function StateVisualizer() {
 
               {/* Jobs List container */}
               <div className="space-y-2.5 max-h-[290px] overflow-y-auto">
-                {state.jobs.length === 0 ? (
+                {Object.values(state.jobs).length === 0 ? (
                   <div className="text-center py-10 text-xs text-slate-500 border border-dashed border-[#141414]/30 rounded-none bg-white/20 font-mono">
                     No jobs currently on database queue. Submit an admission job above to trace the lifecycle.
                   </div>
                 ) : (
-                  state.jobs.map((job) => {
+                  Object.values(state.jobs).sort((a, b) => b.createdAt - a.createdAt).map((job) => {
                     const isRunning = job.status === JobStatus.RUNNING;
                     const isSucceeded = job.status === JobStatus.SUCCEEDED;
                     const isFailed = job.status === JobStatus.FAILED;
@@ -1044,12 +1044,12 @@ export default function StateVisualizer() {
                                 logMessage(`[RACE TRACK] Invalidated worker A lease token. PostgreSQL now considers this lease expired...`, "warn");
                                 
                                 setState((prev) => {
-                                  const updated = prev.jobs.map((j) => {
+                                  const updated = Object.fromEntries(Object.values(prev.jobs).map((j) => {
                                     if (j.jobId === job.jobId) {
-                                      return { ...j, leaseToken: "another-workers-token-" + generateId() };
+                                      return [j.jobId, { ...j, leaseToken: "another-workers-token-" + generateId() }];
                                     }
-                                    return j;
-                                  });
+                                    return [j.jobId, j];
+                                  }));
                                   return { ...prev, jobs: updated };
                                 });
 
@@ -1207,14 +1207,14 @@ export default function StateVisualizer() {
                     </tr>
                   </thead>
                   <tbody>
-                    {state.jobs.length === 0 ? (
+                    {Object.values(state.jobs).length === 0 ? (
                       <tr>
                         <td colSpan={8} className="p-10 text-center text-slate-500 italic font-mono bg-white">
                           Table is empty. Queue some transactions!
                         </td>
                       </tr>
                     ) : (
-                      state.jobs.map((j) => (
+                      Object.values(state.jobs).sort((a, b) => b.createdAt - a.createdAt).map((j) => (
                         <tr key={j.jobId} className="data-row text-[#141414] font-mono">
                           <td className="p-2 sm:p-2.5 font-bold text-indigo-900">{j.jobId.slice(0, 8)}...</td>
                           <td className="p-2 sm:p-2.5">{j.tenantId}</td>
