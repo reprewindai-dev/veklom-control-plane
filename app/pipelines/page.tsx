@@ -695,8 +695,8 @@ function defaultNodeConfig(catId: string, nodeType: string): NodeConfig {
   if (nodeType === "human-approval") return { status: "pending", approval_id: "", approved_by: "", policy: "sovereign_default", requireEvidence: true };
   if (nodeType === "deploy-endpoint" || nodeType === "deploy-agent") return { policy: "sovereign_default", requireEvidence: true };
   if (nodeType === "lock-engine") return { scope: "pipeline_execution_contract", policy: "sovereign_default", requireEvidence: true };
-  if (nodeType === "capi-invoke") return { capi_node_id: "capi-edge-1", allow_autonomous_compute: true, policy: "sovereign_default", requireEvidence: true };
-  if (nodeType === "quantum-terminal") return { allow_shell: true, enforce_sandbox: false, default_dir: "/data", policy: "sovereign_default", requireEvidence: true };
+  if (nodeType === "capi-invoke") return { capi_node_id: "capi-edge-1", allow_autonomous_compute: true, policy: "sovereign_default", requireEvidence: true } as any;
+  if (nodeType === "quantum-terminal") return { allow_shell: true, enforce_sandbox: false, default_dir: "/data", policy: "sovereign_default", requireEvidence: true } as any;
   if (["agent-node", "supervisor-agent", "critic-agent", "planner-agent"].includes(nodeType)) return {
     model_provider: "ollama",
     model_name: "qwen2.5:3b",

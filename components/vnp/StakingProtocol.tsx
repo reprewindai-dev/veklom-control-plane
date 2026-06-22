@@ -38,16 +38,6 @@ import type {
   VerifierNode,
   BondStatusLevel,
 } from "@/lib/vnp/staking-types";
-import {
-  buildProviderBondView,
-  latencyDensityCurve,
-  multiAnchorConsensus,
-  verifierWeight,
-  computeEpochSettlement,
-  currentEpoch,
-  logNormalParams,
-  VNP_PARAMS,
-} from "@/lib/vnp/engine";
 
 // ============ Helpers ============
 
@@ -60,9 +50,6 @@ const STATUS_COLORS: Record<BondStatusLevel, { bg: string; border: string; text:
   breaching: { bg: "bg-orange-500/10", border: "border-orange-500/30", text: "text-orange-400", label: "Breaching" },
   critical: { bg: "bg-rose-500/10", border: "border-rose-500/30", text: "text-rose-400", label: "Critical" },
 };
-
-const generateSHA = () =>
-  Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
 
 // ============ Staking Market Types ============
 
@@ -81,32 +68,6 @@ interface StakingMarket {
   outcome?: string | null;
 }
 
-// ============ Verifier Seed Data ============
-
-const VERIFIER_REGIONS = ["us-east-1", "us-west-2", "eu-west-1", "ap-southeast-1", "ap-northeast-1"];
-const VERIFIER_ASNS = ["AS16509", "AS15169", "AS13335", "AS24940", "AS14061"];
-
-function buildVerifierNodes(apiCount: number): VerifierNode[] {
-  return VERIFIER_REGIONS.map((region, i) => {
-    const baseStake = 5000 + i * 1000;
-    const baseRep = 80 + Math.floor(apiCount * 2.5);
-    const diversity = 0.7 + i * 0.06;
-    const rep = Math.min(100, baseRep);
-    return {
-      address: `0x${(0xA1 + i).toString(16).padStart(2, "0")}...${generateSHA().substring(0, 8)}`,
-      stake: baseStake,
-      reputation: rep,
-      diversityScore: Math.round(diversity * 100) / 100,
-      weight: Math.round(verifierWeight(baseStake, rep, diversity)),
-      region,
-      asn: VERIFIER_ASNS[i],
-      measurementCount: 1000 + apiCount * 50 + i * 200,
-      accuracy: 95 + Math.min(4, i * 0.8),
-      active: true,
-    };
-  });
-}
-
 // ============ Main Component ============
 
 interface StakingProtocolProps {
@@ -122,34 +83,21 @@ export default function StakingProtocol({ apis }: StakingProtocolProps) {
   );
   const markets = Array.isArray(marketData) ? marketData : [];
 
-  // ---- VNP Computed State ----
-  const providers = useMemo<ProviderBondView[]>(() => {
-    return apis.map((a) => buildProviderBondView(a));
-  }, [apis]);
+  // ---- Backend State ----
+  const { data: stateData } = useSWR<any>(
+    "/api/v1/benchmarks/staking/state",
+    fetcher,
+    { refreshInterval: 10000 },
+  );
 
-  const protocolStats = useMemo(() => {
-    const totalValueBonded = providers.reduce((s, p) => s + p.bondAmountUsdc, 0);
-    const totalPenalties = providers.reduce((s, p) => s + p.deviation.penaltyUsdc, 0);
-    const healthyCount = providers.filter((p) => p.status === "healthy" || p.status === "warning").length;
-    const rate = providers.length > 0 ? (healthyCount / providers.length) * 100 : 100;
-    return {
-      totalValueBonded,
-      activeApis: providers.length,
-      activeVerifiers: VERIFIER_REGIONS.length,
-      totalPenalties,
-      settlementRate: Math.round(rate * 10) / 10,
-      epochsProcessed: currentEpoch(),
-    };
-  }, [providers]);
-
-  const settlements = useMemo<EpochSettlement[]>(() => {
-    const ep = currentEpoch();
-    return providers.map((p) =>
-      computeEpochSettlement(p.apiId, p.name, p.targetP95Ms, p.observedP95Ms, p.sigmaMs, p.bondAmountUsdc, ep),
-    );
-  }, [providers]);
-
-  const verifiers = useMemo(() => buildVerifierNodes(apis.length), [apis.length]);
+  const providers: ProviderBondView[] = stateData?.providers || [];
+  const protocolStats = stateData?.protocolStats || {
+    totalValueBonded: 0, activeApis: 0, activeVerifiers: 0, totalPenalties: 0, settlementRate: 100, epochsProcessed: 0
+  };
+  const settlements: EpochSettlement[] = stateData?.settlements || [];
+  const verifiers: VerifierNode[] = stateData?.verifiers || [];
+  const kdeCurves = stateData?.kdeCurves || {};
+  const VNP_PARAMS = stateData?.vnpParams || { k: 3, lambda: 2.0 };
 
   // ---- KDE for selected API ----
   const [selectedKdeApiId, setSelectedKdeApiId] = useState<string>("");
@@ -160,15 +108,7 @@ export default function StakingProtocol({ apis }: StakingProtocolProps) {
     }
   }, [apis, selectedKdeApiId]);
 
-  const kdeData = useMemo(() => {
-    const a = apis.find((x) => x.id === selectedKdeApiId);
-    if (!a) return null;
-    const curve = latencyDensityCurve(a.p50, a.p95);
-    const historicalP95 = a.p95 * (1 - a.drift * 0.01);
-    const shadowP95 = a.p95 * 0.98;
-    const consensus = multiAnchorConsensus(curve.mode, historicalP95, shadowP95);
-    return { curve, consensus, api: a };
-  }, [apis, selectedKdeApiId]);
+  const kdeData = kdeCurves[selectedKdeApiId] || null;
 
   // ---- Staking State ----
   const [selectedMarketId, setSelectedMarketId] = useState<string>("");
@@ -564,7 +504,7 @@ export default function StakingProtocol({ apis }: StakingProtocolProps) {
           </div>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={kdeData.curve.points.map((x, i) => ({ x: Math.round(x), d: kdeData.curve.density[i] }))}>
+              <AreaChart data={kdeData.curve.points.map((x: number, i: number) => ({ x: Math.round(x), d: kdeData.curve.density[i] }))}>
                 <defs>
                   <linearGradient id="densityGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#FFB800" stopOpacity={0.3} />
