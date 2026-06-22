@@ -24,29 +24,30 @@ export default function GovernanceIdentityPage() {
   const [events, setEvents] = useState<TrustEvent[]>([]);
 
   useEffect(() => {
-    // Simulate real-time governance ledger stream
-    const mockEvents: TrustEvent[] = [
-      { id: 'EV-001', timestamp: new Date(Date.now() - 5000).toISOString(), action: 'EXECUTE_QUERY', target: 'vfdp-node-alpha', status: 'AUTHORIZED', hash: 'sha256:8f4c...9d21', reason: 'Signature matched x402 constraints' },
-      { id: 'EV-002', timestamp: new Date(Date.now() - 25000).toISOString(), action: 'MUTATE_STATE', target: 'gfr-matrix-core', status: 'BLOCKED', hash: 'sha256:2a11...4b00', reason: 'Law 0 Violation: Drift risk > 0.01%' },
-      { id: 'EV-003', timestamp: new Date(Date.now() - 120000).toISOString(), action: 'ALLOCATE_FUNDS', target: 'treasury-contract', status: 'AUTHORIZED', hash: 'sha256:e3b2...11ff', reason: 'Multi-sig consensus achieved' },
-    ];
-    setEvents(mockEvents);
+    const fetchEvents = async () => {
+      try {
+        const data = await api<any>('/api/v1/security/events?limit=15');
+        const rawEvents = Array.isArray(data) ? data : data.events || [];
+        
+        // Map backend security events to our Treasury Ledger format
+        const mappedEvents: TrustEvent[] = rawEvents.map((e: any) => ({
+          id: e.id,
+          timestamp: e.timestamp,
+          action: e.event_type.toUpperCase(),
+          target: e.threat_type || 'system_node',
+          status: e.status === 'resolved' ? 'AUTHORIZED' : 'BLOCKED',
+          hash: e.evidence_hash || `sha256:${Math.random().toString(16).slice(2)}`,
+          reason: e.description,
+        }));
+        
+        setEvents(mappedEvents);
+      } catch (err) {
+        console.error('Failed to fetch governance ledger', err);
+      }
+    };
 
-    const interval = setInterval(() => {
-      setEvents(prev => {
-        const newEvent: TrustEvent = {
-          id: `EV-${String(prev.length + 1).padStart(3, '0')}`,
-          timestamp: new Date().toISOString(),
-          action: ['PING_NODE', 'SYNC_STATE', 'VERIFY_PROOF'][Math.floor(Math.random() * 3)],
-          target: ['cappi-gateway', 'mcpapi-v2', 'vfdp-node-alpha'][Math.floor(Math.random() * 3)],
-          status: Math.random() > 0.8 ? 'BLOCKED' : 'AUTHORIZED',
-          hash: `sha256:${Math.random().toString(16).slice(2, 10)}...${Math.random().toString(16).slice(2, 6)}`,
-          reason: 'Routine cryptographic handshake verified',
-        };
-        return [newEvent, ...prev].slice(0, 15);
-      });
-    }, 8000);
-
+    fetchEvents();
+    const interval = setInterval(fetchEvents, 8000);
     return () => clearInterval(interval);
   }, []);
 

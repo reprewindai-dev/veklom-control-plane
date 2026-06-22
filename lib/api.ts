@@ -119,3 +119,39 @@ function safeJson(t: string) {
 
 // SWR fetcher
 export const fetcher = <T,>(path: string) => api<T>(path);
+
+export async function duelApi<T>(path: string, opts: RequestOpts = {}): Promise<T> {
+  const DUEL_BASE = "https://veklom-agent-duel.vercel.app";
+  const headers: Record<string, string> = {
+    "Accept": "application/json",
+  };
+  if (opts.body !== undefined) headers["Content-Type"] = "application/json";
+
+  const url = new URL(path.startsWith("http") ? path : `${DUEL_BASE}${path}`);
+  if (opts.query) {
+    for (const [k, v] of Object.entries(opts.query)) {
+      if (v !== undefined && v !== null) {
+        url.searchParams.set(k, String(v));
+      }
+    }
+  }
+
+  const res = await fetch(url.toString(), {
+    method: opts.method ?? (opts.body !== undefined ? "POST" : "GET"),
+    headers,
+    body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+    signal: opts.signal,
+    cache: "no-store",
+  });
+
+  const text = await res.text();
+  const json = text ? safeJson(text) : undefined;
+  if (!res.ok) {
+    const msg =
+      (json && (json.detail || json.message || json.error)) ||
+      res.statusText ||
+      `HTTP ${res.status}`;
+    throw new ApiError(res.status, String(msg), json);
+  }
+  return json as T;
+}
