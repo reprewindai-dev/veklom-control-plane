@@ -33,14 +33,14 @@ export default function FinancialDataPlanePage() {
   const fetchFinancialData = async () => {
     try {
       const [balanceData, txData] = await Promise.all([
-        api<any>('/api/v1/wallet/balance').catch(() => ({ balance_usd: 124.50 })),
+        api<any>('/api/v1/wallet/balance').catch(() => ({ balance_usd: 0 })),
         api<any>('/api/v1/wallet/transactions').catch(() => [])
       ]);
-      setBalance(balanceData.balance_usd ?? 124.50);
-      setTransactions(Array.isArray(txData) ? txData : generateDemoTransactions());
+      setBalance(balanceData.balance_usd ?? 0);
+      setTransactions(Array.isArray(txData) ? txData : []);
     } catch (e) {
       console.error(e);
-      setTransactions(generateDemoTransactions());
+      setTransactions([]);
     } finally {
       setLoading(false);
     }
@@ -273,10 +273,4 @@ def calculate_fee(amount: str, rate: str) -> Decimal:
   );
 }
 
-function generateDemoTransactions(): Transaction[] {
-  return [
-    { id: 'tx_inf_88291', amount_usd: 0.0014, type: 'LLM_INFERENCE', status: 'COMMITTED', tx_hash: 'sha256:88a7b9c02d1d4f9f7a631e847c2d92bb', created_at: new Date().toISOString() },
-    { id: 'tx_inf_88290', amount_usd: 0.0031, type: 'LLM_INFERENCE', status: 'COMMITTED', tx_hash: 'sha256:c22fa1e948a9ff82d2f73ba9198aa7d9', created_at: new Date(Date.now() - 60000).toISOString() },
-    { id: 'tx_tkn_88289', amount_usd: 0.0005, type: 'AGENT_TELEMETRY', status: 'COMMITTED', tx_hash: 'sha256:a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6', created_at: new Date(Date.now() - 120000).toISOString() },
-  ];
-}
+

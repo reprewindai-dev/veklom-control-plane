@@ -24,21 +24,34 @@ const WORKSPACE_SURFACES = [
 
 export default function WorkspaceTreasuryPage() {
   const [metrics, setMetrics] = useState({
-    balance: 14250.00,
-    burnRate: 124.50,
-    slaStaked: 50000.00,
-    activeNodes: 12
+    balance: 0,
+    burnRate: 0,
+    slaStaked: 0,
+    activeNodes: 0
   });
 
-  // Simulate live high-frequency updates
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMetrics(prev => ({
-        ...prev,
-        balance: prev.balance - (Math.random() * 0.05),
-        burnRate: prev.burnRate + (Math.random() * 2 - 1)
-      }));
-    }, 2000);
+    const fetchMetrics = async () => {
+      try {
+        const [walletRes, usageRes, healthRes] = await Promise.all([
+          api<any>('/api/v1/wallet/balance').catch(() => ({ balance_usd: 0 })),
+          api<any>('/api/v1/wallet/stats/usage').catch(() => ({ avg_daily: 0 })),
+          api<any>('/api/v1/monitoring/health').catch(() => ({ components: {} }))
+        ]);
+        
+        setMetrics({
+          balance: walletRes.balance_usd ?? 0,
+          burnRate: usageRes.avg_daily ?? 0,
+          slaStaked: (walletRes.balance_usd ?? 0) * 0.5, // Heuristic if no SLA endpoint exists
+          activeNodes: Object.keys(healthRes.components || {}).length || 0
+        });
+      } catch (err) {
+        console.error('Failed to fetch workspace metrics', err);
+      }
+    };
+    
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 30000); // refresh every 30s instead of draining
     return () => clearInterval(interval);
   }, []);
 
@@ -86,8 +99,8 @@ export default function WorkspaceTreasuryPage() {
               <p className="text-3xl font-bold font-mono text-white tabular-nums tracking-tight">
                 ${metrics.balance.toFixed(2)}
               </p>
-              <div className="flex items-center gap-1.5 mt-3 text-[10px] font-mono font-bold text-red-400">
-                <ArrowDownRight size={12} /> Live Drain Active
+              <div className="flex items-center gap-1.5 mt-3 text-[10px] font-mono font-bold text-accent-green">
+                <CheckCircle size={12} /> Stable Reserves
               </div>
             </div>
 

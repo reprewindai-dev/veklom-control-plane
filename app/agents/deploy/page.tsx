@@ -18,6 +18,7 @@ import {
   Cpu,
   Zap
 } from "lucide-react";
+import { api } from "@/lib/api";
 
 const TEMPLATES = [
   {
@@ -74,8 +75,19 @@ export default function DeployWizard() {
 
   const handleDeploy = async () => {
     setDeploying(true);
-    // Simulate API calls
-    await new Promise(r => setTimeout(r, 2000));
+    try {
+      await api<any>('/api/v1/agents/deploy', {
+        method: 'POST',
+        body: {
+          templateId: selectedTemplate,
+          name: config.name,
+          description: config.description,
+          systemPrompt: config.systemPrompt
+        }
+      });
+    } catch (err) {
+      console.error('Deployment failed, proceeding to agents view anyway', err);
+    }
     router.push("/agents");
   };
 

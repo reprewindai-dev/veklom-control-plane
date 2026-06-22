@@ -42,6 +42,7 @@ import { Agent, PipelineStep, WorkflowType, StepLog, PresetTemplate } from "@/li
 import { PRESET_TEMPLATES } from "@/lib/benchmarks/templates";
 import CharacterCreator from "@/components/benchmarks/CharacterCreator";
 import AuthorityScenarios from "@/components/benchmarks/AuthorityScenarios";
+import { duelApi } from "@/lib/api";
 
 // Default Agents list if no template is loaded
 const DEFAULT_AGENTS: Agent[] = [
@@ -182,26 +183,20 @@ export default function App() {
     setActiveStepIndex(0);
 
     try {
-      const response = await fetch("/api/simulate", {
+      const response = await duelApi<any>("/api/simulate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           input: inputPrompt,
           workflowType,
           agents,
           steps: pipelineSteps,
           discussionTurns,
-        }),
+        },
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to execute workflow simulation.");
-      }
-
-      setSimulationLogs(data.logs);
+      setSimulationLogs(response.logs || []);
       setSimulationStatus("completed");
-      setActiveStepIndex(data.logs.length);
+      setActiveStepIndex((response.logs || []).length);
     } catch (err: any) {
       console.error(err);
       setApiError(err.message || "An unexpected error occurred during execution.");
@@ -254,22 +249,16 @@ export default function App() {
         stepInstruction = "Collaborative response & brainstorming feedback loop.";
       }
 
-      const response = await fetch("/api/simulate/turn", {
+      const data = await duelApi<any>("/api/simulate/turn", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           input: inputPrompt,
           workflowType,
           currentAgent,
           historyLog: simulationLogs,
           stepInstruction,
-        }),
+        },
       });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Turn execution failed.");
-      }
 
       setSimulationLogs(prev => [...prev, data.log]);
       const nextIndex = activeStepIndex + 1;
