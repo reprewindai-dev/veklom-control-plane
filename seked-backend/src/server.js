@@ -821,6 +821,9 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
+// Export app before start
+module.exports = app;
+
 // Start server
 if (require.main === module) {
   app.listen(PORT, () => {
@@ -834,5 +837,3 @@ process.on('SIGINT', async () => {
   await prisma.$disconnect();
   process.exit(0);
 });
-
-module.exports = app;

@@ -63,7 +63,7 @@ model Decision {
   job_id          String
   action          String // RUN, HOLD, BLOCK, RECOVER
   delay_seconds   Int
-  proof_id        String
+  proof_id        String   @unique
   seked_state_id  String
   policy_id       String?
   engine_response Json?
