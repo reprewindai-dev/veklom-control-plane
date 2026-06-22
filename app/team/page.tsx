@@ -4,7 +4,7 @@ import Shell from "@/components/Shell";
 import TierGate from "@/components/TierGate";
 import { useApi } from "@/hooks/useApi";
 import { Skeleton, Table, Button, ErrorBox } from "@/components/ui";
-import { unwrapList } from "@/types/api";
+import { unwrapList, TeamMember, TeamRole, SsoStatus, ScimStatus, MfaStatus, ListEnvelope } from "@/types/api";
 import { api } from "@/lib/api";
 import { useState } from "react";
 import Modal from "@/components/Modal";
@@ -14,11 +14,11 @@ import { Users, ShieldCheck, KeyRound, UserPlus, Trash2, Network } from "lucide-
 const ROLE_OPTIONS = ["OWNER", "ADMIN", "DEVELOPER", "VIEWER"];
 
 export default function TeamPage() {
-  const members = useApi<any>("/api/v1/team/members");
-  const roles = useApi<any>("/api/v1/team/roles");
-  const sso = useApi<any>("/api/v1/team/sso/status");
-  const scim = useApi<any>("/api/v1/team/scim/status");
-  const mfa = useApi<any>("/api/v1/team/mfa/status");
+  const members = useApi<ListEnvelope<TeamMember>>("/api/v1/team/members");
+  const roles = useApi<ListEnvelope<TeamRole>>("/api/v1/team/roles");
+  const sso = useApi<SsoStatus>("/api/v1/team/sso/status");
+  const scim = useApi<ScimStatus>("/api/v1/team/scim/status");
+  const mfa = useApi<MfaStatus>("/api/v1/team/mfa/status");
   const [showInvite, setShowInvite] = useState(false);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("DEVELOPER");
@@ -26,7 +26,7 @@ export default function TeamPage() {
   const [err, setErr] = useState<string>();
 
   const m = mfa.data || {};
-  const rows = unwrapList<any>(members.data);
+  const rows = unwrapList<TeamMember>(members.data);
   const enforced = m.enforcement === "enforced";
 
   async function invite() {
@@ -88,7 +88,7 @@ export default function TeamPage() {
           </SectionCard>
 
           <SectionCard label="Roles" title="Access tiers" className="lg:col-span-2" bodyClassName="space-y-2">
-            {roles.isLoading ? <Skeleton className="h-32" /> : unwrapList<any>(roles.data).map((r) => (
+            {roles.isLoading ? <Skeleton className="h-32" /> : unwrapList<TeamRole>(roles.data).map((r) => (
               <div key={r.id} className="card p-3">
                 <div className="flex items-center gap-2">
                   <Pill tone="amber">{r.name || r.id}</Pill>

@@ -54,3 +54,43 @@ export function unwrapList<T>(r: unknown): T[] {
   }
   return [];
 }
+
+export interface TeamMember {
+  id: string;
+  email: string;
+  name?: string;
+  role?: string;
+  mfa?: boolean;
+  lastActive?: string;
+  status?: string;
+  [k: string]: unknown;
+}
+
+export interface TeamRole {
+  id: string;
+  name?: string;
+  description?: string;
+  permissions?: string[];
+  [k: string]: unknown;
+}
+
+export interface SsoStatus {
+  enabled?: boolean;
+  configured?: boolean;
+  [k: string]: unknown;
+}
+
+export interface ScimStatus {
+  scim_enabled?: boolean;
+  configured?: boolean;
+  [k: string]: unknown;
+}
+
+export interface MfaStatus {
+  enforcement?: string;
+  total_members?: number;
+  mfa_compliance_percent?: number;
+  mfa_enabled_count?: number;
+  grace_period_hours?: number;
+  [k: string]: unknown;
+}
