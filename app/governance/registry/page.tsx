@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Shield,
   Activity,
@@ -15,29 +15,178 @@ import {
   Cpu,
   Layers,
   Sparkles,
-  Flame
+  Flame,
+  Terminal,
+  PlayCircle
 } from "lucide-react";
+import { api } from "@/lib/api";
+
+interface PGLStatus {
+  has_pgl_profile: boolean;
+  requires_onboarding: boolean;
+  workspace_id: string;
+  profile: {
+    certificate_id: string;
+    actor_id: string;
+    genome_hash: string;
+    constitution_hash?: string;
+    status: string;
+    created_at: string;
+    ledger_event_count: number;
+    chain_head: string | null;
+  } | null;
+}
+
+interface SnapshotResponse {
+  certificate_id: string;
+  workspace_id: string;
+  actor_id: string;
+  genome_hash: string;
+  constitution_hash: string;
+  status: string;
+  created_at: string;
+  ledger_events: {
+    id: string;
+    event_type: string;
+    event_hash: string;
+    prev_event_hash: string | null;
+    created_at: string;
+  }[];
+  chain_head: string | null;
+  version_count: number;
+}
 
 export default function SovereignOperatorRegistry() {
+  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<PGLStatus | null>(null);
+  const [snapshot, setSnapshot] = useState<SnapshotResponse | null>(null);
   const [operatorAddress, setOperatorAddress] = useState<string | null>(null);
   const [trustScore, setTrustScore] = useState<number>(0);
   const [streak, setStreak] = useState<number>(0);
   const [events, setEvents] = useState<any[]>([]);
   const [selectedEventType, setSelectedEventType] = useState("verified_action");
   const [actionDescription, setActionDescription] = useState("Verified autonomous network telemetry handshake");
+  const [customDelta, setCustomDelta] = useState("");
 
-  const handlePublishTelemetry = () => {
-    const newEvent = {
-      timestamp: new Date().toISOString(),
-      tag: selectedEventType,
-      delta: selectedEventType === "verified_action" ? "+10" : "-50",
-      reason: actionDescription,
-      proof: "0x" + Math.random().toString(16).slice(2, 64)
-    };
-    
-    setEvents([newEvent, ...events]);
-    setTrustScore((prev) => Math.min(1000, prev + (selectedEventType === "verified_action" ? 10 : -50)));
-    setStreak((prev) => selectedEventType === "verified_action" ? prev + 1 : 0);
+  // cAPI console states
+  const [capiAgentId, setCapiAgentId] = useState("agent_alpha");
+  const [capiProtocol, setCapiProtocol] = useState("mcp");
+  const [capiAction, setCapiAction] = useState("web_search");
+  const [capiPayload, setCapiPayload] = useState('{"query": "Veklom protocol stats"}');
+  const [capiReceipt, setCapiReceipt] = useState<any | null>(null);
+  const [capiRunning, setCapiRunning] = useState(false);
+  const [capiError, setCapiError] = useState<string | null>(null);
+
+  const fetchRegistryData = async () => {
+    setLoading(true);
+    try {
+      const pglStatus = await api<PGLStatus>("/api/v1/pgl/status");
+      setStatus(pglStatus);
+      
+      if (pglStatus.profile?.certificate_id) {
+        const snap = await api<SnapshotResponse>(`/api/v1/pgl/snapshot/${pglStatus.profile.certificate_id}`);
+        setSnapshot(snap);
+        
+        // Calculate trust score based on event logs
+        let calculatedScore = 500; // Base score
+        let currentStreak = 0;
+        
+        const mappedEvents = snap.ledger_events.map(e => {
+          let delta = "+10";
+          let explanation = "Autonomous trace action";
+          
+          if (e.event_type === "operator_created") {
+            delta = "+50";
+            explanation = "Registry node created";
+          } else if (e.event_type.includes("violation") || e.event_type.includes("quarantine")) {
+            delta = "-100";
+            explanation = "Policy violation gate check triggered";
+          }
+          
+          const deltaNum = parseInt(delta);
+          calculatedScore = Math.max(0, Math.min(1000, calculatedScore + deltaNum));
+          if (deltaNum > 0) currentStreak += 1;
+          
+          return {
+            timestamp: e.created_at,
+            tag: e.event_type,
+            delta: deltaNum > 0 ? `+${deltaNum}` : `${deltaNum}`,
+            reason: explanation,
+            proof: e.event_hash
+          };
+        });
+
+        setEvents(mappedEvents.reverse()); // most recent first
+        setTrustScore(calculatedScore);
+        setStreak(currentStreak);
+      }
+      
+      // Fetch operator user address
+      const me = await api<any>("/api/v1/auth/me");
+      if (me?.pgl_id) {
+        setOperatorAddress(me.pgl_id);
+      }
+    } catch (e) {
+      console.error("Failed to load PGL registry stats", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRegistryData();
+  }, []);
+
+  const handlePublishTelemetry = async () => {
+    if (!status?.profile?.certificate_id) return;
+    try {
+      const delta = customDelta ? parseInt(customDelta) : (selectedEventType === "verified_action" ? 10 : -50);
+      const res = await api<any>("/api/v1/pgl/ledger/events", {
+        body: {
+          agent_id: status.profile.certificate_id,
+          event_type: selectedEventType,
+          actor: "operator-console",
+          summary: actionDescription,
+          details: {
+            delta,
+            client_proof_seed: Math.random().toString(36).slice(2)
+          }
+        }
+      });
+      await fetchRegistryData();
+    } catch (e) {
+      console.error("Telemetry publish failed", e);
+    }
+  };
+
+  const handleTriggerCapi = async () => {
+    setCapiRunning(true);
+    setCapiError(null);
+    setCapiReceipt(null);
+    try {
+      let parsedPayload = {};
+      try {
+        parsedPayload = JSON.parse(capiPayload);
+      } catch {
+        throw new Error("Invalid payload JSON format");
+      }
+
+      const receipt = await api<any>("/api/v1/capi/execute", {
+        body: {
+          agent_id: capiAgentId,
+          pgl_id: status?.profile?.certificate_id || "unregistered_agent_sig",
+          target_protocol: capiProtocol,
+          action: capiAction,
+          payload: parsedPayload
+        }
+      });
+      setCapiReceipt(receipt);
+      await fetchRegistryData(); // refresh ledger events to pull in run evidence
+    } catch (e: any) {
+      setCapiError(e.message || "cAPI execution failed");
+    } finally {
+      setCapiRunning(false);
+    }
   };
 
   return (
@@ -99,9 +248,12 @@ export default function SovereignOperatorRegistry() {
             </p>
           </div>
         </div>
-        <button className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 px-4 py-2 rounded text-xs font-bold text-neutral-300 hover:text-white transition-colors">
-          <CheckCircle className="w-3.5 h-3.5 text-blue-400" />
-          Run Acceptance Tests
+        <button 
+          onClick={fetchRegistryData}
+          className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 px-4 py-2 rounded text-xs font-bold text-neutral-300 hover:text-white transition-colors"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 text-blue-400 ${loading ? 'animate-spin' : ''}`} />
+          Reload Live Registry
         </button>
       </div>
 
@@ -112,8 +264,11 @@ export default function SovereignOperatorRegistry() {
           <div>
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 mb-3 flex items-center justify-between">
               SOVEREIGN OPERATOR ID CARD
-              <button className="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors normal-case tracking-normal">
-                <RefreshCw className="w-3 h-3" /> sync registry
+              <button 
+                onClick={fetchRegistryData}
+                className="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors normal-case tracking-normal"
+              >
+                <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} /> sync registry
               </button>
             </h3>
             
@@ -140,13 +295,13 @@ export default function SovereignOperatorRegistry() {
                   <div>
                     <div className="text-[10px] text-neutral-500 font-bold tracking-widest uppercase mb-1">CUR STREAK</div>
                     <div className="text-xl font-bold text-orange-500 flex items-center gap-1 justify-center">
-                      <Flame className="w-4 h-4" /> {streak}d
+                      <Flame className="w-4 h-4" /> {streak}
                     </div>
                   </div>
                   <div>
                     <div className="text-[10px] text-neutral-500 font-bold tracking-widest uppercase mb-1">LONGEST</div>
                     <div className="text-xl font-bold text-neutral-300">
-                      {streak}d
+                      {streak}
                     </div>
                   </div>
                 </div>
@@ -155,13 +310,13 @@ export default function SovereignOperatorRegistry() {
               <div className="space-y-4 text-xs">
                 <div className="flex justify-between border-b border-neutral-800/50 pb-2">
                   <span className="text-neutral-500">Operator address:</span>
-                  <span className={operatorAddress ? "text-cyan-400" : "text-rose-500 font-bold italic"}>
+                  <span className={operatorAddress ? "text-cyan-400 break-all max-w-[200px] text-right font-mono" : "text-rose-500 font-bold italic"}>
                     {operatorAddress || "No wallet linked"}
                   </span>
                 </div>
                 <div className="flex justify-between border-b border-neutral-800/50 pb-2">
                   <span className="text-neutral-500">Workspace identifier:</span>
-                  <span className="text-neutral-300">sandbox_veklom_demo</span>
+                  <span className="text-neutral-300 font-mono">{status?.workspace_id || "sandbox_veklom_demo"}</span>
                 </div>
                 <div className="flex justify-between pb-1">
                   <span className="text-neutral-500">Score Version:</span>
@@ -171,45 +326,89 @@ export default function SovereignOperatorRegistry() {
             </div>
           </div>
 
-          {/* Configure Group */}
+          {/* cAPI Console Panel */}
           <div>
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 mb-3">
-              CONFIGURE NODE IDENTITY GROUP
+              cAPI GOVERNED TOOL GATEWAY CONSOLE
             </h3>
-            <div className="bg-neutral-900/30 border border-neutral-800 rounded-lg p-5">
-              <div className="flex gap-2 mb-4">
+            <div className="bg-neutral-900/30 border border-neutral-800 rounded-lg p-5 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[9px] font-bold uppercase text-neutral-500 mb-1">AGENT TARGET</label>
+                  <input 
+                    type="text" 
+                    value={capiAgentId}
+                    onChange={(e) => setCapiAgentId(e.target.value)}
+                    className="w-full bg-black/40 border border-neutral-800 rounded px-2.5 py-1.5 text-xs text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold uppercase text-neutral-500 mb-1">PROTOCOL</label>
+                  <select 
+                    value={capiProtocol}
+                    onChange={(e) => setCapiProtocol(e.target.value)}
+                    className="w-full bg-black/40 border border-neutral-800 rounded px-2.5 py-1.5 text-xs text-white"
+                  >
+                    <option value="mcp">mcp</option>
+                    <option value="http">http</option>
+                    <option value="local_tool">local_tool</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-[9px] font-bold uppercase text-neutral-500 mb-1">ACTION/TOOL NAME</label>
                 <input 
                   type="text" 
-                  placeholder="E.G. OPERATOR NODE ALPHA"
-                  className="flex-1 bg-black/40 border border-neutral-800 rounded px-3 py-2 text-xs focus:outline-none focus:border-neutral-600"
+                  value={capiAction}
+                  onChange={(e) => setCapiAction(e.target.value)}
+                  className="w-full bg-black/40 border border-neutral-800 rounded px-2.5 py-1.5 text-xs text-white font-mono"
                 />
-                <button className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-4 py-2 rounded text-xs transition-colors">
-                  Update Card Tag
-                </button>
               </div>
-              <p className="text-[10px] text-neutral-500 mb-6">
-                Note: Updating the display tag logs a 0-points verified identity trace directly to audit trail.
-              </p>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-neutral-400">Test rank transition animation:</span>
-                <button className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors bg-blue-500/10 px-3 py-1.5 rounded border border-blue-500/20">
-                  <Sparkles className="w-3.5 h-3.5" /> Preview Rank Celebration
-                </button>
+              <div>
+                <label className="block text-[9px] font-bold uppercase text-neutral-500 mb-1">PAYLOAD JSON (ARGUMENTS)</label>
+                <textarea 
+                  value={capiPayload}
+                  onChange={(e) => setCapiPayload(e.target.value)}
+                  rows={2}
+                  className="w-full bg-black/40 border border-neutral-800 rounded px-2.5 py-1.5 text-xs text-white font-mono"
+                />
               </div>
+              <button 
+                onClick={handleTriggerCapi}
+                disabled={capiRunning}
+                className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-neutral-800 text-white py-2 rounded text-xs font-bold transition-colors flex items-center justify-center gap-2"
+              >
+                <PlayCircle className="w-4 h-4" />
+                {capiRunning ? "Processing Gates..." : "Dispatch Governed cAPI Execution"}
+              </button>
+
+              {capiError && (
+                <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-3 rounded text-xs">
+                  {capiError}
+                </div>
+              )}
+
+              {capiReceipt && (
+                <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-3 rounded text-[11px] font-mono space-y-1">
+                  <div>Status: <span className="font-bold">{capiReceipt.status}</span></div>
+                  <div>Verdict: <span className="font-bold">{capiReceipt.verdict}</span></div>
+                  <div>Chain: <span className="underline">{capiReceipt.evidence_chain_id}</span></div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Right Column */}
         <div className="lg:col-span-7 flex flex-col gap-6">
-          {/* Mock Telemetry Ingestion */}
+          {/* Telemetry Ingestion */}
           <div>
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 mb-3">
-              MOCK TELEMETRY EVENT INGESTION
+              TELEMETRY EVENT INGESTION (REAL PGL)
             </h3>
             <div className="bg-neutral-900/30 border border-neutral-800 rounded-lg p-6">
               <p className="text-xs text-neutral-400 mb-6">
-                Event logs trigger the deterministic score calculator backend. Use this panel to simulate real-world trust logs.
+                Publishing score logs writes directly to the GnomLedger hash chain. All subsequent checks will verify this chain lineage.
               </p>
               
               <div className="grid grid-cols-2 gap-4 mb-5">
@@ -220,15 +419,18 @@ export default function SovereignOperatorRegistry() {
                     onChange={(e) => setSelectedEventType(e.target.value)}
                     className="w-full bg-black/40 border border-neutral-800 rounded px-3 py-2.5 text-xs text-white focus:outline-none focus:border-neutral-600 appearance-none"
                   >
-                    <option value="verified_action">verified_action (+10)</option>
-                    <option value="policy_violation">policy_violation (-50)</option>
+                    <option value="verified_action">verified_action</option>
+                    <option value="policy_violation">policy_violation</option>
+                    <option value="deployment">deployment</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-500 mb-2">CUSTOM SCORE OVERRIDE (OPTIONAL)</label>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-500 mb-2">CUSTOM DELTA (OPTIONAL)</label>
                   <input 
                     type="text" 
-                    placeholder="Default delta for event"
+                    placeholder="Enter delta integer (e.g. -20)"
+                    value={customDelta}
+                    onChange={(e) => setCustomDelta(e.target.value)}
                     className="w-full bg-black/40 border border-neutral-800 rounded px-3 py-2.5 text-xs text-neutral-400 focus:outline-none focus:border-neutral-600"
                   />
                 </div>
@@ -246,10 +448,11 @@ export default function SovereignOperatorRegistry() {
               
               <button 
                 onClick={handlePublishTelemetry}
-                className="w-full bg-neutral-800 hover:bg-neutral-700 text-neutral-300 py-3 rounded flex items-center justify-center gap-2 text-xs font-bold transition-colors mb-8"
+                disabled={!status?.profile?.certificate_id}
+                className="w-full bg-neutral-800 hover:bg-neutral-700 disabled:bg-neutral-900 text-neutral-300 py-3 rounded flex items-center justify-center gap-2 text-xs font-bold transition-colors mb-8"
               >
                 <Send className="w-3.5 h-3.5" />
-                Publish Telemetry event to Operator Card
+                Publish Live Telemetry to PGL Ledger
               </button>
               
               <div className="border-t border-neutral-800 pt-6">
@@ -267,7 +470,7 @@ export default function SovereignOperatorRegistry() {
             </div>
           </div>
 
-          {/* Public Secure Directory */}
+          {/* Secure Directory */}
           <div>
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 mb-3">
               PUBLIC SECURE DIRECTORY READ-OUT
