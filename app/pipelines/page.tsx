@@ -11,10 +11,10 @@ import { Button, Skeleton, Table } from "@/components/ui";
 import { ModuleHeader, SectionCard, Pill, RoutePill } from "@/components/telemetry";
 import PipelineCanvas, { PNode, PEdge, CAT_COLOR } from "@/components/PipelineCanvas";
 import { unwrapList } from "@/types/api";
-import { Play, Rocket, Plus, Save, Search, Cpu, Settings2, History, Library, ShieldCheck, LayoutTemplate, AlertTriangle } from "lucide-react";
+import { Play, Rocket, Plus, Save, Search, Cpu, Settings2, History, Library, ShieldCheck, LayoutTemplate, AlertTriangle, Bot, Sparkles } from "lucide-react";
 
 const RUN_STAGES = ["Source", "Build", "Validate", "Test", "Stage", "Gate", "Deploy"];
-type PanelTab = "library" | "inspector" | "templates" | "runs";
+type PanelTab = "library" | "inspector" | "templates" | "runs" | "copilot";
 type CatalogCertification = {
   status?: string;
   adapter?: string;
@@ -457,9 +457,10 @@ export default function PipelinesPage() {
 
           {/* Node palette / inspector */}
           <SectionCard label="Library" title="Nodes" className="self-start">
-            <div className="grid grid-cols-4 gap-1 mb-3 rounded-lg border border-border bg-bg-900 p-1">
+            <div className="grid grid-cols-5 gap-1 mb-3 rounded-lg border border-border bg-bg-900 p-1">
               <PanelTabButton active={panelTab === "library"} onClick={() => setPanelTab("library")} title="Library"><Library size={13} /></PanelTabButton>
               <PanelTabButton active={panelTab === "inspector"} onClick={() => setPanelTab("inspector")} title="Inspector"><Settings2 size={13} /></PanelTabButton>
+              <PanelTabButton active={panelTab === "copilot"} onClick={() => setPanelTab("copilot")} title="Copilot"><Bot size={13} /></PanelTabButton>
               <PanelTabButton active={panelTab === "templates"} onClick={() => setPanelTab("templates")} title="Templates"><LayoutTemplate size={13} /></PanelTabButton>
               <PanelTabButton active={panelTab === "runs"} onClick={() => setPanelTab("runs")} title="Runs"><History size={13} /></PanelTabButton>
             </div>
@@ -483,25 +484,32 @@ export default function PipelinesPage() {
                             <span className="text-[10px] uppercase tracking-wider text-ink-600 font-semibold">{cat.label}</span>
                           </div>
                           <div className="grid grid-cols-1 gap-1.5">
-                            {ns.map((n: any) => (
-                              <button key={n.id} onClick={() => addNode(cat.id, n)}
-                                className="group flex items-center gap-2 rounded-lg border border-border bg-white/[0.02] hover:border-ink-600 hover:bg-white/[0.04] px-2.5 py-1.5 text-left transition">
-                                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: CAT_COLOR[cat.id] || CAT_COLOR.input }} />
-                                <span className="min-w-0">
-                                  <span className="flex items-center gap-1.5 text-[12px] text-ink-50">
-                                    <span className="truncate">{n.name}</span>
-                                    <span className={clsx(
-                                      "rounded border px-1 py-0.5 text-[8px] uppercase leading-none shrink-0",
-                                      n.certification?.status === "real" ? "border-accent-green/30 bg-accent-green/10 text-accent-green"
-                                      : n.certification?.status === "unsafe" ? "border-accent-red/30 bg-accent-red/10 text-accent-red"
-                                      : "border-brand-500/30 bg-brand-500/10 text-brand-400"
-                                    )}>{n.certification?.status || "real"}</span>
+                            {ns.map((n: any) => {
+                              const isPremium = ["pgl-register", "x402-payment-gate", "audit-signer", "policy-gate", "repo-risk-gate", "evidence-receipt"].includes(n.id);
+                              return (
+                                <button key={n.id} onClick={() => addNode(cat.id, n)}
+                                  className={clsx(
+                                    "group flex items-center gap-2 rounded-lg border bg-white/[0.02] px-2.5 py-1.5 text-left transition",
+                                    isPremium ? "border-brand-500/50 hover:bg-brand-500/10 hover:border-brand-400" : "border-border hover:border-ink-600 hover:bg-white/[0.04]"
+                                  )}>
+                                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: CAT_COLOR[cat.id] || CAT_COLOR.input }} />
+                                  <span className="min-w-0 flex-1">
+                                    <span className="flex items-center gap-1.5 text-[12px] text-ink-50">
+                                      <span className="truncate">{n.name}</span>
+                                      {isPremium && <Sparkles size={10} className="text-brand-400 shrink-0" />}
+                                      <span className={clsx(
+                                        "rounded border px-1 py-0.5 text-[8px] uppercase leading-none shrink-0 ml-auto",
+                                        n.certification?.status === "real" ? "border-accent-green/30 bg-accent-green/10 text-accent-green"
+                                        : n.certification?.status === "unsafe" ? "border-accent-red/30 bg-accent-red/10 text-accent-red"
+                                        : "border-brand-500/30 bg-brand-500/10 text-brand-400"
+                                      )}>{n.certification?.status || "real"}</span>
+                                    </span>
+                                    <span className="block text-[10px] text-ink-600 truncate">{n.description}</span>
                                   </span>
-                                  <span className="block text-[10px] text-ink-600 truncate">{n.description}</span>
-                                </span>
-                                <Plus size={12} className="ml-auto text-ink-600 group-hover:text-brand-400 shrink-0" />
-                              </button>
-                            ))}
+                                  <Plus size={12} className={clsx("shrink-0", isPremium ? "text-brand-400" : "text-ink-600 group-hover:text-brand-400")} />
+                                </button>
+                              );
+                            })}
                           </div>
                         </div>
                       );
@@ -557,6 +565,67 @@ export default function PipelinesPage() {
                   )) : (
                     <div className="rounded-lg border border-border bg-white/[0.02] p-3 text-xs text-ink-500">No runs recorded for this pipeline yet.</div>
                   )}
+              </div>
+            )}
+
+            {panelTab === "copilot" && (
+              <div className="space-y-3 max-h-[520px] overflow-y-auto scroll-thin pr-1">
+                <div className="flex items-center gap-2 px-1 mb-2">
+                  <Bot size={16} className="text-brand-400" />
+                  <span className="text-sm font-semibold text-brand-400">Insight Copilot</span>
+                </div>
+                
+                {nodes.length === 0 ? (
+                  <div className="rounded-lg border border-brand-500/30 bg-brand-500/10 p-3 text-xs text-brand-100 flex items-start gap-2">
+                    <Sparkles size={14} className="mt-0.5 shrink-0 text-brand-400" />
+                    <div>
+                      <span className="font-semibold block text-brand-300">Start Building</span>
+                      Drag an <b>Input</b> node from the Library to begin constructing your pipeline.
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {!nodes.some(n => n.cat === "input") && (
+                      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200 flex items-start gap-2">
+                        <AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-400" />
+                        <div>
+                          <span className="font-semibold block text-amber-400">Missing Input</span>
+                          Your pipeline requires an initial data source. Add an <b>Input</b> or <b>Document Loader</b> node.
+                        </div>
+                      </div>
+                    )}
+                    
+                    {!nodes.some(n => n.cat === "output") && (
+                      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200 flex items-start gap-2">
+                        <AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-400" />
+                        <div>
+                          <span className="font-semibold block text-amber-400">Missing Output</span>
+                          Your pipeline has no designated output. Consider adding a <b>JSON Formatter</b> or an <b>Audit Logger</b>.
+                        </div>
+                      </div>
+                    )}
+
+                    {!nodes.some(n => ["policy-gate", "x402-payment-gate", "pgl-register", "audit-signer", "repo-risk-gate"].includes(n.nodeType)) && (
+                      <div className="rounded-lg border border-brand-500/30 bg-brand-500/10 p-3 text-xs text-brand-100 flex items-start gap-2">
+                        <Sparkles size={14} className="mt-0.5 shrink-0 text-brand-400" />
+                        <div>
+                          <span className="font-semibold block text-brand-300">Veklom Edge Recommendation</span>
+                          Maximize your infrastructure! Secure this pipeline by adding a <b>Policy Gate</b>, or anchor the evidence cryptographically using the <b>Audit Signer</b>.
+                        </div>
+                      </div>
+                    )}
+
+                    {nodes.some(n => n.cat === "input") && nodes.some(n => n.cat === "output") && (
+                      <div className="rounded-lg border border-accent-green/30 bg-accent-green/10 p-3 text-xs text-accent-green flex items-start gap-2">
+                        <ShieldCheck size={14} className="mt-0.5 shrink-0" />
+                        <div>
+                          <span className="font-semibold block">End-to-End Ready</span>
+                          Your pipeline has clear inputs and outputs. You can deploy it to production when ready.
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </SectionCard>
