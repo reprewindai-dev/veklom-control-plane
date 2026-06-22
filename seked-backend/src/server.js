@@ -705,10 +705,12 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`SEKED Control Plane running on port ${PORT}`);
-  console.log(`SEKED v1.0 Specification - Fingerprint: ${SEKED_CANONICAL_FINGERPRINT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`SEKED Control Plane running on port ${PORT}`);
+    console.log(`SEKED v1.0 Specification - Fingerprint: ${SEKED_CANONICAL_FINGERPRINT}`);
+  });
+}
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
