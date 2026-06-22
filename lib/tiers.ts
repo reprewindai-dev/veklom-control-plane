@@ -28,7 +28,7 @@ export const TIER_PRICE: Record<Tier, string> = {
 };
 
 export function meetsTier(current: Tier | undefined, required: Tier): boolean {
-  if (!current) return required === "free";
+  if (!current) return false;
   return TIER_RANK[current] >= TIER_RANK[required];
 }
 
