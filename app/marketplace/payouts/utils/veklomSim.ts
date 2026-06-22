@@ -117,7 +117,7 @@ export interface RedisReservation {
 
 export interface SimSystemState {
   tenants: SimTenant[];
-  jobs: SimJob[];
+  jobs: Record<string, SimJob>;
   jobEvents: SimJobEvent[];
   auditBlocks: SimAuditBlock[];
   redisReservations: Record<string, RedisReservation>;
@@ -378,7 +378,7 @@ export function createSimulationManager(
 
     setState((prev) => ({
       ...prev,
-      jobs: [newJob, ...prev.jobs],
+      jobs: { [newJob.jobId]: newJob, ...prev.jobs },
       jobEvents: [newEvent, ...prev.jobEvents],
     }));
 
@@ -416,13 +416,11 @@ export function createSimulationManager(
     setState((prev) => {
       // Find first job that is QUEUED, budget hasn't failed out, and availableAt <= now
       const now = Date.now();
-      const jobIdx = prev.jobs.findIndex(
+      const job = Object.values(prev.jobs).find(
         (j) => j.status === JobStatus.QUEUED && j.availableAt <= now && j.attempts < j.maxAttempts
       );
 
-      if (jobIdx === -1) return prev;
-
-      const job = prev.jobs[jobIdx];
+      if (!job) return prev;
       const leaseToken = generateUUID();
       const nextLeaseExpires = now + leaseMs;
 
@@ -488,13 +486,11 @@ export function createSimulationManager(
     let details: any = null;
 
     setState((prev) => {
-      const jobIdx = prev.jobs.findIndex((j) => j.jobId === jobId);
-      if (jobIdx === -1) {
+      const job = prev.jobs[jobId];
+      if (!job) {
         errorMsg = "JOB_NOT_FOUND";
         return prev;
       }
-
-      const job = prev.jobs[jobIdx];
 
       // CRITICAL ROW COUNT ASSERTION SIMULATION!!
       // Status update fails if lease_token doesn't match
@@ -555,8 +551,7 @@ export function createSimulationManager(
         updatedAt: Date.now(),
       };
 
-      const updatedJobs = [...prev.jobs];
-      updatedJobs[jobIdx] = nextJob;
+      const updatedJobs = { ...prev.jobs, [job.jobId]: nextJob };
 
       const nextEvents: SimJobEvent[] = [
         {
@@ -631,13 +626,11 @@ export function createSimulationManager(
     let details: any = null;
 
     setState((prev) => {
-      const jobIdx = prev.jobs.findIndex((j) => j.jobId === jobId);
-      if (jobIdx === -1) {
+      const job = prev.jobs[jobId];
+      if (!job) {
         errorMsg = "JOB_NOT_FOUND";
         return prev;
       }
-
-      const job = prev.jobs[jobIdx];
 
       // ROW COUNT LEASE VALIDATION TO OVERCOME STALE LEASES
       if (job.leaseToken !== leaseToken || job.status !== JobStatus.RUNNING) {
@@ -645,7 +638,6 @@ export function createSimulationManager(
         return prev;
       }
 
-      const updatedJobs = [...prev.jobs];
       const nextStatus = retryable ? JobStatus.QUEUED : JobStatus.FAILED;
       const now = Date.now();
 
@@ -688,7 +680,7 @@ export function createSimulationManager(
         finishedAt: !retryable ? now : null,
       };
 
-      updatedJobs[jobIdx] = nextJob;
+      const updatedJobs = { ...prev.jobs, [job.jobId]: nextJob };
 
       const nextEvents: SimJobEvent[] = [
         {
@@ -760,10 +752,10 @@ export function createSimulationManager(
     const now = Date.now();
 
     setState((prev) => {
-      const updatedJobs = [...prev.jobs];
+      const updatedJobs = { ...prev.jobs };
       let updatedEvents = [...prev.jobEvents];
 
-      prev.jobs.forEach((j, idx) => {
+      Object.values(prev.jobs).forEach((j) => {
         if (
           j.status === JobStatus.RUNNING &&
           j.leaseExpiresAt !== null &&
@@ -772,7 +764,7 @@ export function createSimulationManager(
         ) {
           affectedQuantity += 1;
           
-          updatedJobs[idx] = {
+          updatedJobs[j.jobId] = {
             ...j,
             status: JobStatus.QUEUED,
             leaseToken: null,
