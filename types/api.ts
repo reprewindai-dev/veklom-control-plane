@@ -9,6 +9,7 @@ export interface Me {
   org_id?: string;
   org_name?: string;
   is_superuser?: boolean;
+  tier?: string;
   [k: string]: unknown;
 }
 
