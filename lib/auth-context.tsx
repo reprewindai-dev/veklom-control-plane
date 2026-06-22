@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             tier: "sovereign",
             plan: "sovereign",
             status: "active"
-          } as any);
+          } as Subscription);
         }
         setLoading(false);
         return;
