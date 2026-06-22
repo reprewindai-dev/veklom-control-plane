@@ -71,6 +71,8 @@ export default function SubscriptionsPage() {
               priceLabelText = "$35,000";
             } else if (t === "enterprise" && (priceLabelText.toLowerCase().includes("free") || p.price === 0 || !p.price)) {
               priceLabelText = "Custom";
+            } else if (t === "sovereign" && (priceLabelText.toLowerCase().includes("free") || p.price === 0 || !p.price)) {
+              priceLabelText = "Custom";
             }
             
             // Buttons must be honest
