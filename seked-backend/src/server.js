@@ -9,6 +9,7 @@ require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
 const { createHash } = require('crypto');
 const { v4: uuidv4 } = require('uuid');
+const Joi = require('joi');
 
 const app = express();
 const prisma = new PrismaClient();
@@ -219,6 +220,20 @@ app.post('/verify', async (req, res) => {
 });
 
 // Policy Management
+const policySchema = Joi.object({
+  name: Joi.string().required(),
+  sigma_threshold: Joi.number().required(),
+  ci_threshold: Joi.number().required(),
+  si_threshold: Joi.number().required(),
+  action_rules: Joi.object().pattern(
+    Joi.string(),
+    Joi.object({
+      action: Joi.string().valid('RUN', 'HOLD', 'BLOCK', 'RECOVER').required(),
+      delay_seconds: Joi.number().integer().min(0).required()
+    })
+  ).required()
+});
+
 app.get('/policies', async (req, res) => {
   try {
     const policies = await prisma.policy.findMany({
@@ -232,7 +247,12 @@ app.get('/policies', async (req, res) => {
 
 app.post('/policies', async (req, res) => {
   try {
-    const { name, sigma_threshold, ci_threshold, si_threshold, action_rules } = req.body;
+    const { error, value } = policySchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
+
+    const { name, sigma_threshold, ci_threshold, si_threshold, action_rules } = value;
     
     const policy = await prisma.policy.create({
       data: {
@@ -268,7 +288,12 @@ app.get('/policies/:id', async (req, res) => {
 
 app.put('/policies/:id', async (req, res) => {
   try {
-    const { name, sigma_threshold, ci_threshold, si_threshold, action_rules } = req.body;
+    const { error, value } = policySchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
+
+    const { name, sigma_threshold, ci_threshold, si_threshold, action_rules } = value;
     
     const policy = await prisma.policy.update({
       where: { id: req.params.id },
