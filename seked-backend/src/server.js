@@ -7,7 +7,7 @@ const compression = require('compression');
 require('dotenv').config();
 
 const { PrismaClient } = require('@prisma/client');
-const { createHash } = require('crypto');
+const { createHash, createHmac } = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 
 const app = express();
@@ -115,6 +115,36 @@ function getDirective(ratio) {
 function createSekedFingerprint(state) {
   const stateString = JSON.stringify(state);
   return createHash('sha256').update(stateString).digest('hex');
+}
+
+function generateIdentitySignature(identity) {
+  const secret = process.env.SEKED_SIGNATURE_SECRET || process.env.JWT_SECRET || 'seked-dev-secret-key';
+
+  if (process.env.NODE_ENV === 'production' && !process.env.SEKED_SIGNATURE_SECRET && !process.env.JWT_SECRET) {
+    throw new Error('Missing SEKED_SIGNATURE_SECRET or JWT_SECRET environment variable in production');
+  }
+
+  // Create a copy to avoid mutating the original
+  const signablePayload = { ...identity };
+
+  // Remove fields that shouldn't be part of the signature calculation
+  delete signablePayload.signature;
+  delete signablePayload.hash;
+
+  // Sort keys for consistent stringification
+  const sortedPayload = {};
+  Object.keys(signablePayload).sort().forEach(key => {
+    // Handle Dates properly
+    if (signablePayload[key] instanceof Date) {
+      sortedPayload[key] = signablePayload[key].toISOString();
+    } else {
+      sortedPayload[key] = signablePayload[key];
+    }
+  });
+
+  return createHmac('sha256', secret)
+    .update(JSON.stringify(sortedPayload))
+    .digest('hex');
 }
 
 // Validation Middleware
@@ -350,10 +380,11 @@ function mintExecutionIdentity(runData, sekedState, pglCertificate) {
     execution_attestation_hash: null,
     issuer: "seked-control-plane",
     issued_at: new Date().toISOString(),
-    signature: "signed-by-seked", // In production, use actual cryptographic signing
+    signature: "",
     hash: ""
   };
   
+  executionIdentity.signature = generateIdentitySignature(executionIdentity);
   executionIdentity.hash = createSekedFingerprint({
     execution_id: executionIdentity.execution_id,
     run_id: executionIdentity.run_id,
@@ -362,9 +393,9 @@ function mintExecutionIdentity(runData, sekedState, pglCertificate) {
     seked_attestation_hash: executionIdentity.seked_attestation_hash,
     directive: executionIdentity.directive,
     expires_at: executionIdentity.expires_at,
-    issuer: executionIdentity.issuer
+    issuer: executionIdentity.issuer,
+    signature: executionIdentity.signature
   });
-
   return executionIdentity;
 }
 
@@ -608,6 +639,19 @@ app.post('/mcp-gateway/validate', async (req, res) => {
       });
     }
     
+    // Verify signature
+    const expectedSignature = generateIdentitySignature(identity);
+    const signatureBuffer = Buffer.from(identity.signature || '', 'hex');
+    const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+
+    if (signatureBuffer.length !== expectedBuffer.length || !require('crypto').timingSafeEqual(signatureBuffer, expectedBuffer)) {
+      return res.status(403).json({
+        error: "INVALID_SIGNATURE",
+        detail: "ExecutionIdentityV1 signature verification failed",
+        law0: true
+      });
+    }
+
     // Check scope coverage
     const scope = identity.scope_json;
     if (scope.allowed_tools && !scope.allowed_tools.includes(tool_name)) {
