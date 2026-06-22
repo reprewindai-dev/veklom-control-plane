@@ -27,7 +27,7 @@ const limiter = rateLimit({
   max: 100, // limit each IP to 100 requests per windowMs
   message: { error: 'Too many requests from this IP' }
 });
-app.use('/api/', limiter);
+app.use('/', limiter);
 
 // SEKED v1.0 Constants
 const SEKED_SPECIFICATION_VERSION = "1.0";
