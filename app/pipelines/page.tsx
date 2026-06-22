@@ -255,10 +255,19 @@ export default function PipelinesPage() {
         const parts = buf.split("\n\n");
         buf = parts.pop() || "";
         for (const part of parts) {
-          const line = part.split("\n").find((l) => l.startsWith("data:"));
-          if (!line) continue;
+          let dataIdx = part.indexOf("\ndata:");
+          if (dataIdx !== -1) {
+            dataIdx += 1;
+          } else if (part.startsWith("data:")) {
+            dataIdx = 0;
+          }
+          if (dataIdx === -1) continue;
+
+          const endIdx = part.indexOf("\n", dataIdx);
+          const dataStr = endIdx === -1 ? part.slice(dataIdx + 5) : part.slice(dataIdx + 5, endIdx);
+
           let ev: any;
-          try { ev = JSON.parse(line.slice(5).trim()); } catch { continue; }
+          try { ev = JSON.parse(dataStr.trim()); } catch { continue; }
           if (ev.stage) setStageStatus((s) => ({ ...s, [ev.stage]: ev.type === "step.completed" ? "completed" : "running" }));
           if (ev.type === "run.completed") {
             setStageStatus(Object.fromEntries(RUN_STAGES.map((s) => [s, "completed"])));
