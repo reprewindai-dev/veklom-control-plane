@@ -877,7 +877,7 @@ function NodeInspector({ node, config, onChange }: { node: PNode; config: NodeCo
               </Control>
             </div>
             <Control label="Auth token">
-              <input className="input h-8 text-xs" type="password" value={config.auth_token || ""} onChange={(e) => onChange({ auth_token: e.target.value })} placeholder="Bearer token" />
+              <input className="input h-8 text-xs" type="password" value={config.auth_token || ""} onChange={(e) => onChange({ auth_token: e.target.value })} placeholder="Enter auth token" />
             </Control>
             <JsonConfigControl label="Headers" field="headers" value={config.headers || {}} onChange={onChange} />
             <JsonConfigControl label="Payload template" field="payload_template" value={config.payload_template || { result: "$.result", audit_hash: "$.audit_hash", cost: "$.cost" }} onChange={onChange} />
