@@ -132,7 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSub(undefined);
   }, []);
 
-  const tier: Tier = useMemo(() => normalizeTier(sub?.tier || sub?.plan || (me as any)?.tier), [sub, me]);
+  const tier: Tier = useMemo(() => normalizeTier(sub?.tier || sub?.plan || me?.tier), [sub, me]);
 
   return (
     <Ctx.Provider value={{ me, sub, tier, loading, error, login, signup, loginWithGithub, logout, refresh: loadProfile }}>
