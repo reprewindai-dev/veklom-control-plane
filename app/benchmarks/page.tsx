@@ -1,56 +1,29 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, Suspense } from "react";
 import {
   Shield,
   Activity,
   BarChart2,
-  Layers,
   Cpu,
-  Terminal,
-  Server,
   Network,
   Fingerprint,
-  Lock,
-  ArrowRight,
-  TrendingUp,
+  ArrowUpDown,
+  Search,
+  Filter,
+  ExternalLink,
 } from "lucide-react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/api";
 import { motion, AnimatePresence } from "motion/react";
-import {
-  Radar,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  ResponsiveContainer,
-} from "recharts";
+import { useSearchParams } from "next/navigation";
 
-// ============ Types ============
-interface BenchApi {
-  id: string;
-  name: string;
-  category: string;
-  p50: number;
-  p95: number;
-  p99: number;
-  sla: number;
-  drift: number;
-  sovereignTier: number;
-  complianceLabels: string[];
-  govScore: number;
-  devScore: number;
-  endpointUrl?: string | null;
-  description?: string | null;
-  mcpSchema?: Record<string, unknown> | null;
-  provider?: string | null;
-  throughput: number;
-  uptime24h: number;
-  totalStaked: number;
-  status: string;
-}
+import type { BenchmarkApiEntry, VNPScore } from "@/lib/vnp/types";
+import { computeLeaderboard } from "@/lib/vnp/scoring";
+import { VNP_DIMENSIONS, gradeForScore } from "@/lib/vnp/constants";
+import { ScoreCard, MeasurementFeed, ConsensusVisualization } from "@/components/vnp";
 
+// ============ Staking Types (preserved for Staking tab) ============
 interface StakingMarket {
   id: string;
   title: string;
@@ -66,102 +39,19 @@ interface StakingMarket {
   outcome?: string | null;
 }
 
-// ============ Utilities ============
-const clamp = (n: number, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, Math.round(n)));
-
-function pillarsFor(a: BenchApi) {
-  const security = clamp(a.govScore);
-  const performance = clamp(a.devScore);
-  const compliance = clamp(70 + (4 - a.sovereignTier) * 7 + (a.complianceLabels?.length ?? 0) * 3);
-  const trust = Math.round(((security + performance + compliance) / 3) * 10);
-  return { security, performance, compliance, trust };
-}
-
 const fmtUSD = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
-const fmtPct = (n: number) => `${n.toFixed(2)}%`;
-const fmtMs = (n: number) => `${n.toFixed(1)}ms`;
 
-// ============ Mock M2M Terminal Data ============
-const generateSHA = () =>
-  Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+// ============ Sort options for leaderboard ============
+type SortKey = "composite" | "p99_latency" | "error_rate" | "availability" | "throughput" | "x402_compliance";
 
-function M2MTerminal({ apis }: { apis: BenchApi[] }) {
-  const [logs, setLogs] = useState<{ id: string; hash: string; msg: string; type: string }[]>([]);
-
-  useEffect(() => {
-    if (!apis || apis.length === 0) return;
-    const interval = setInterval(() => {
-      const target = apis[Math.floor(Math.random() * apis.length)];
-      const type = Math.random() > 0.7 ? "GOV_CHECK" : "ROUTE_EVAL";
-      const hash = generateSHA();
-      const newLog = {
-        id: Math.random().toString(36).substring(7),
-        hash: hash.substring(0, 16) + "...",
-        type,
-        msg: `[${target.name}] ${type === "GOV_CHECK" ? "Trust verification passed" : "Capability route established"}`,
-      };
-      setLogs((prev) => [newLog, ...prev].slice(0, 30));
-    }, 1500);
-    return () => clearInterval(interval);
-  }, [apis]);
-
-  return (
-    <div className="h-full flex flex-col font-mono text-xs">
-      <div className="flex items-center gap-2 p-4 border-b border-[#1A1A1A] bg-[#050505]">
-        <Terminal className="w-4 h-4 text-[#FFB800]" />
-        <span className="text-[#A1A1A6] font-semibold tracking-widest uppercase">
-          PGL Immutable Feed
-        </span>
-        <div className="ml-auto flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#FFB800] animate-pulse" />
-          <span className="text-[#FFB800] tracking-widest">LIVE</span>
-        </div>
-      </div>
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#0A0A0A] custom-scrollbar">
-        <AnimatePresence>
-          {logs.map((log) => (
-            <motion.div
-              key={log.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0 }}
-              className="group"
-            >
-              <div className="text-[#A1A1A6] opacity-50 mb-0.5">
-                <Fingerprint className="w-3 h-3 inline mr-1" />
-                {log.hash}
-              </div>
-              <div className="flex items-start gap-2">
-                <span
-                  className={`px-1.5 py-0.5 rounded text-[9px] uppercase tracking-widest ${
-                    log.type === "GOV_CHECK"
-                      ? "bg-[#FFB800]/10 text-[#FFB800] border border-[#FFB800]/20"
-                      : "bg-[#FFFFFF]/5 text-[#FFFFFF] border border-[#FFFFFF]/10"
-                  }`}
-                >
-                  {log.type}
-                </span>
-                <span className="text-white/80 mt-0.5">{log.msg}</span>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-        {logs.length === 0 && (
-          <div className="text-[#A1A1A6] opacity-50 text-center mt-10">Awaiting M2M Handshakes...</div>
-        )}
-      </div>
-      <div className="p-4 border-t border-[#1A1A1A] bg-[#050505]">
-        <div className="flex justify-between items-center text-[#A1A1A6]">
-          <span>Crypto-State: SECURE</span>
-          <span>SHA-256</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: "composite", label: "VNP Composite" },
+  { key: "p99_latency", label: "p99 Latency" },
+  { key: "error_rate", label: "Error Rate" },
+  { key: "availability", label: "Availability" },
+  { key: "throughput", label: "Throughput" },
+  { key: "x402_compliance", label: "x402 Compliance" },
+];
 
 // ============ Page ============
 function NexusConsoleInner() {
@@ -169,15 +59,15 @@ function NexusConsoleInner() {
   const initialTab = (searchParams.get("tab") as "trust" | "staking" | "consensus") || "trust";
   const [activeTab, setActiveTab] = useState<"trust" | "staking" | "consensus">(initialTab);
 
-  // Sync state if URL changes directly
   useEffect(() => {
     const tab = searchParams.get("tab") as "trust" | "staking" | "consensus";
     if (tab && tab !== activeTab) {
       setActiveTab(tab);
     }
-  }, [searchParams]);
+  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { data: lbData, isLoading: lbLoading } = useSWR<BenchApi[]>(
+  // Data fetching
+  const { data: lbData, isLoading: lbLoading } = useSWR<BenchmarkApiEntry[]>(
     "/api/v1/benchmarks/leaderboard",
     fetcher,
     { refreshInterval: 8000 }
@@ -188,14 +78,59 @@ function NexusConsoleInner() {
     { refreshInterval: 10000 }
   );
 
-  const apis = useMemo(() => {
+  // VNP Scoring
+  const [sortKey, setSortKey] = useState<SortKey>("composite");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+
+  const vnpScores = useMemo(() => {
     const list = Array.isArray(lbData) ? lbData : [];
-    return [...list]
-      .map((a) => ({ api: a, pillars: pillarsFor(a) }))
-      .sort((x, y) => y.pillars.trust - x.pillars.trust);
+    return computeLeaderboard(list);
   }, [lbData]);
 
+  const categories = useMemo(() => {
+    const cats = new Set(vnpScores.map((s) => s.category));
+    return ["all", ...Array.from(cats).sort()];
+  }, [vnpScores]);
+
+  const filteredScores = useMemo(() => {
+    let result = [...vnpScores];
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (s) =>
+          s.apiName.toLowerCase().includes(q) ||
+          s.provider.toLowerCase().includes(q) ||
+          s.category.toLowerCase().includes(q)
+      );
+    }
+
+    // Category filter
+    if (categoryFilter !== "all") {
+      result = result.filter((s) => s.category === categoryFilter);
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      if (sortKey === "composite") return b.composite - a.composite;
+      const dimA = a.dimensions.find((d) => d.id === sortKey);
+      const dimB = b.dimensions.find((d) => d.id === sortKey);
+      return (dimB?.normalized ?? 0) - (dimA?.normalized ?? 0);
+    });
+
+    return result;
+  }, [vnpScores, searchQuery, categoryFilter, sortKey]);
+
   const markets = Array.isArray(marketData) ? marketData : [];
+
+  // Aggregate stats
+  const avgComposite = vnpScores.length > 0
+    ? vnpScores.reduce((s, v) => s + v.composite, 0) / vnpScores.length
+    : 0;
+  const totalMeasurements = vnpScores.reduce((s, v) => s + v.measurementCount, 0);
+  const apisWithHighConfidence = vnpScores.filter((s) => s.confidence.level === "high").length;
 
   if (lbLoading) {
     return (
@@ -210,36 +145,62 @@ function NexusConsoleInner() {
 
   return (
     <div className="flex flex-col xl:flex-row h-screen bg-[#0A0A0A] text-white font-sans overflow-hidden selection:bg-[#FFB800]/30">
-      {/* Left Panel: PGL Terminal */}
-      <div className="hidden xl:flex flex-col w-[400px] border-r border-[#1A1A1A] bg-[#050505] z-10">
-        <M2MTerminal apis={apis.map((a) => a.api)} />
+      {/* Left Panel: Measurement Feed */}
+      <div className="hidden xl:flex flex-col w-[380px] border-r border-[#1A1A1A] bg-[#050505] z-10">
+        <MeasurementFeed scores={vnpScores} />
       </div>
 
       {/* Right Panel: Interactive Console */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-        {/* Subtle background glow */}
         <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-[#FFB800]/5 rounded-full blur-[150px] pointer-events-none" />
 
         {/* Header */}
-        <header className="px-8 py-10 border-b border-[#1A1A1A] relative z-10">
-          <div className="flex items-center gap-3 mb-4">
+        <header className="px-8 py-8 border-b border-[#1A1A1A] relative z-10">
+          <div className="flex items-center gap-3 mb-3">
             <span className="px-2 py-0.5 rounded-sm bg-[#FFB800] text-black font-mono text-[10px] font-bold tracking-widest uppercase">
               Core Module
             </span>
             <span className="text-[#A1A1A6] font-mono text-xs uppercase tracking-widest">
-              v2.1.0-sovereign
+              v0.1.0-mainnet
+            </span>
+            <span className="flex items-center gap-1 text-[9px] font-bold tracking-wider text-[#3EE7A2] ml-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#3EE7A2] animate-pulse" />
+              LIVE
             </span>
           </div>
-          <h1 className="text-4xl lg:text-5xl font-medium tracking-tight mb-3">
+          <h1 className="text-4xl lg:text-5xl font-medium tracking-tight mb-2">
             Veklom Nexus Protocol
           </h1>
-          <p className="text-[#A1A1A6] max-w-2xl text-sm leading-relaxed">
-            The mathematically undisputable trust and capability router. APIs are benchmarked,
-            cryptographically verified, and continuously evaluated for sovereign deployment.
+          <p className="text-[#A1A1A6] max-w-3xl text-sm leading-relaxed">
+            Open, community-governed API benchmark scoring for machine-consumable trust.
+            10 dimensions, cryptographically anchored on Base L2, measured via k6 across 5 global regions.
           </p>
 
+          {/* Stats bar */}
+          <div className="flex items-center gap-6 mt-5 text-[10px] font-mono uppercase tracking-widest">
+            <div>
+              <span className="text-[#6E6E73]">APIs Scored</span>
+              <span className="text-white ml-2">{vnpScores.length}</span>
+            </div>
+            <div className="w-px h-4 bg-[#242424]" />
+            <div>
+              <span className="text-[#6E6E73]">Avg Composite</span>
+              <span className="text-[#FFB800] ml-2">{avgComposite.toFixed(1)}</span>
+            </div>
+            <div className="w-px h-4 bg-[#242424]" />
+            <div>
+              <span className="text-[#6E6E73]">Measurements</span>
+              <span className="text-white ml-2">{totalMeasurements.toLocaleString()}</span>
+            </div>
+            <div className="w-px h-4 bg-[#242424]" />
+            <div>
+              <span className="text-[#6E6E73]">High Confidence</span>
+              <span className="text-[#3EE7A2] ml-2">{apisWithHighConfidence}/{vnpScores.length}</span>
+            </div>
+          </div>
+
           {/* Navigation Tabs */}
-          <div className="flex gap-1 mt-10 p-1 bg-[#111111] border border-[#1A1A1A] rounded-lg w-fit">
+          <div className="flex gap-1 mt-8 p-1 bg-[#111111] border border-[#1A1A1A] rounded-lg w-fit">
             {[
               { id: "trust", label: "Trust Node Matrix", icon: Shield },
               { id: "staking", label: "Staking Protocol", icon: BarChart2 },
@@ -247,7 +208,7 @@ function NexusConsoleInner() {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as "trust" | "staking" | "consensus")}
                 className={`flex items-center gap-2 px-6 py-2.5 rounded-md text-sm font-medium transition-all ${
                   activeTab === tab.id
                     ? "bg-[#1A1A1A] text-[#FFB800] shadow-lg border border-[#FFB800]/20"
@@ -264,97 +225,97 @@ function NexusConsoleInner() {
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto p-8 custom-scrollbar relative z-10">
           <AnimatePresence mode="wait">
+            {/* ======== TRUST NODE MATRIX — VNP Leaderboard ======== */}
             {activeTab === "trust" && (
               <motion.div
                 key="trust"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
               >
-                {apis.map(({ api, pillars }) => (
-                  <div
-                    key={api.id}
-                    className="bg-[#0D0D0D] border border-[#1A1A1A] rounded-xl p-6 hover:border-[#FFB800]/30 transition-all group relative overflow-hidden"
-                  >
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      <Server className="w-32 h-32 text-[#FFB800]" />
-                    </div>
-                    
-                    <div className="flex justify-between items-start mb-6 relative z-10">
-                      <div>
-                        <h3 className="text-xl font-semibold text-white mb-1">{api.name}</h3>
-                        <div className="text-xs font-mono text-[#A1A1A6] uppercase tracking-widest">
-                          {api.provider || "Veklom Network"}
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end">
-                        <div className="text-3xl font-light text-[#FFB800]">
-                          {pillars.trust}
-                        </div>
-                        <div className="text-[10px] font-mono text-[#FFB800]/50 uppercase tracking-widest">
-                          Trust Index
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Radar Chart for capability visualization */}
-                    <div className="w-full h-40 mb-6 relative z-10">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart
-                          cx="50%"
-                          cy="50%"
-                          outerRadius="70%"
-                          data={[
-                            { subject: "Gov", A: pillars.security, fullMark: 100 },
-                            { subject: "Dev", A: pillars.performance, fullMark: 100 },
-                            { subject: "Comp", A: pillars.compliance, fullMark: 100 },
-                            { subject: "SLA", A: api.sla, fullMark: 100 },
-                          ]}
-                        >
-                          <PolarGrid stroke="#1A1A1A" />
-                          <PolarAngleAxis dataKey="subject" tick={{ fill: "#A1A1A6", fontSize: 10 }} />
-                          <Radar
-                            name="Capabilities"
-                            dataKey="A"
-                            stroke="#FFB800"
-                            strokeWidth={1.5}
-                            fill="#FFB800"
-                            fillOpacity={0.1}
-                          />
-                        </RadarChart>
-                      </ResponsiveContainer>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 mb-6 relative z-10">
-                      <div>
-                        <div className="text-[10px] font-mono text-[#A1A1A6] uppercase mb-1">Latency p95</div>
-                        <div className="text-sm">{fmtMs(api.p95)}</div>
-                      </div>
-                      <div>
-                        <div className="text-[10px] font-mono text-[#A1A1A6] uppercase mb-1">Throughput</div>
-                        <div className="text-sm">{Math.round(api.throughput)} req/s</div>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 border-t border-[#1A1A1A] flex flex-wrap gap-2 relative z-10">
-                      {api.complianceLabels.map((lbl) => (
-                        <span
-                          key={lbl}
-                          className="px-2 py-1 bg-[#1A1A1A] border border-[#333333] text-[#A1A1A6] text-[10px] uppercase font-mono rounded"
-                        >
-                          {lbl}
-                        </span>
-                      ))}
-                      <span className="px-2 py-1 bg-[#FFB800]/10 border border-[#FFB800]/20 text-[#FFB800] text-[10px] uppercase font-mono rounded">
-                        Tier {api.sovereignTier}
-                      </span>
-                    </div>
+                {/* Toolbar: search, filter, sort */}
+                <div className="flex flex-wrap items-center gap-3 mb-6">
+                  {/* Search */}
+                  <div className="flex items-center gap-2 rounded-lg border border-[#242424] bg-[#111111] px-3 h-9 flex-1 min-w-[200px] max-w-md focus-within:border-[#FFB800]/40 transition">
+                    <Search className="w-4 h-4 text-[#6E6E73]" />
+                    <input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search APIs, providers..."
+                      className="flex-1 bg-transparent text-sm text-white placeholder:text-[#6E6E73] outline-none"
+                    />
                   </div>
-                ))}
+
+                  {/* Category filter */}
+                  <div className="flex items-center gap-2 rounded-lg border border-[#242424] bg-[#111111] px-3 h-9">
+                    <Filter className="w-3.5 h-3.5 text-[#6E6E73]" />
+                    <select
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      className="bg-transparent text-sm text-[#A1A1A6] outline-none cursor-pointer"
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat} value={cat} className="bg-[#111111]">
+                          {cat === "all" ? "All Categories" : cat}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Sort */}
+                  <div className="flex items-center gap-2 rounded-lg border border-[#242424] bg-[#111111] px-3 h-9">
+                    <ArrowUpDown className="w-3.5 h-3.5 text-[#6E6E73]" />
+                    <select
+                      value={sortKey}
+                      onChange={(e) => setSortKey(e.target.value as SortKey)}
+                      className="bg-transparent text-sm text-[#A1A1A6] outline-none cursor-pointer"
+                    >
+                      {SORT_OPTIONS.map((opt) => (
+                        <option key={opt.key} value={opt.key} className="bg-[#111111]">
+                          Sort: {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <span className="text-[10px] font-mono text-[#6E6E73] ml-auto">
+                    {filteredScores.length} APIs
+                  </span>
+                </div>
+
+                {/* Dimension legend */}
+                <div className="flex flex-wrap items-center gap-3 mb-6 p-3 rounded-lg border border-[#1A1A1A] bg-[#0D0D0D]">
+                  <span className="text-[9px] font-mono uppercase tracking-widest text-[#6E6E73] mr-2">
+                    10 Dimensions:
+                  </span>
+                  {VNP_DIMENSIONS.map((dim) => (
+                    <span
+                      key={dim.id}
+                      className="text-[9px] font-mono text-[#A1A1A6] px-2 py-0.5 rounded border border-[#242424] bg-[#111111]"
+                      title={`${dim.label} — Weight: ${(dim.weight * 100).toFixed(0)}%`}
+                    >
+                      {dim.shortLabel} <span className="text-[#6E6E73]">{(dim.weight * 100).toFixed(0)}%</span>
+                    </span>
+                  ))}
+                </div>
+
+                {/* Score cards grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-5">
+                  {filteredScores.map((score) => (
+                    <ScoreCard key={score.apiId} score={score} />
+                  ))}
+                </div>
+
+                {filteredScores.length === 0 && (
+                  <div className="text-center py-20 text-[#6E6E73]">
+                    <Activity className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">No APIs match your filters</p>
+                  </div>
+                )}
               </motion.div>
             )}
 
+            {/* ======== STAKING PROTOCOL ======== */}
             {activeTab === "staking" && (
               <motion.div
                 key="staking"
@@ -412,60 +373,25 @@ function NexusConsoleInner() {
                       );
                     })}
                   </div>
+
+                  {markets.length === 0 && (
+                    <div className="p-10 text-center text-[#6E6E73] text-sm">
+                      Staking markets will be available once VNP scoring is fully operational.
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}
 
+            {/* ======== CONSENSUS VECTOR ======== */}
             {activeTab === "consensus" && (
               <motion.div
                 key="consensus"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="flex flex-col items-center justify-center py-20"
               >
-                <div className="relative w-full max-w-3xl aspect-[2/1] border border-[#1A1A1A] rounded-2xl bg-[#0D0D0D] flex items-center justify-center overflow-hidden">
-                  <div className="absolute inset-0 bg-[url('https://transparenttextures.com/patterns/cubes.png')] opacity-5" />
-                  
-                  <div className="flex items-center gap-12 relative z-10">
-                    <div className="flex flex-col gap-4">
-                      {[1, 2, 3].map((i) => (
-                        <motion.div
-                          key={i}
-                          animate={{ y: [0, -5, 0] }}
-                          transition={{ duration: 2, delay: i * 0.2, repeat: Infinity }}
-                          className="w-16 h-16 rounded-xl border border-[#333333] bg-[#111111] flex items-center justify-center shadow-lg"
-                        >
-                          <Server className="w-6 h-6 text-[#A1A1A6]" />
-                        </motion.div>
-                      ))}
-                    </div>
-                    
-                    <ArrowRight className="w-8 h-8 text-[#FFB800] opacity-50" />
-                    
-                    <motion.div
-                      animate={{ scale: [1, 1.05, 1], boxShadow: ["0 0 0px #FFB800", "0 0 30px #FFB800", "0 0 0px #FFB800"] }}
-                      transition={{ duration: 3, repeat: Infinity }}
-                      className="w-32 h-32 rounded-full border-2 border-[#FFB800] bg-[#FFB800]/10 flex flex-col items-center justify-center backdrop-blur-md"
-                    >
-                      <Lock className="w-8 h-8 text-[#FFB800] mb-2" />
-                      <span className="text-[10px] font-mono text-[#FFB800] uppercase tracking-widest">
-                        Consensus
-                      </span>
-                    </motion.div>
-                    
-                    <ArrowRight className="w-8 h-8 text-[#FFB800] opacity-50" />
-                    
-                    <div className="w-16 h-16 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center">
-                      <Activity className="w-6 h-6 text-emerald-400" />
-                    </div>
-                  </div>
-                </div>
-                
-                <p className="mt-8 text-center text-[#A1A1A6] max-w-lg text-sm leading-relaxed">
-                  The M2M Capability Router determines endpoint validity via multi-node consensus.
-                  Results are hashed into the PGL immutable identity layer.
-                </p>
+                <ConsensusVisualization scores={vnpScores} />
               </motion.div>
             )}
           </AnimatePresence>
