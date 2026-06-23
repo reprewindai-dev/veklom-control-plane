@@ -4,7 +4,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # ─── Stage 2: builder ─────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
