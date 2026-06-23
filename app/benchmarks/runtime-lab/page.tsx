@@ -43,6 +43,7 @@ import {
   SovereignRoute 
 } from "./types";
 import { GNOMLEDGER_REPLAY_DATA } from "./gnomledgerDataset";
+import Shell from "@/components/Shell";
 
 export default function App() {
   // Scenario presets
@@ -402,13 +403,14 @@ export default function App() {
     setExecutionResult(null);
 
     try {
-      const res = await fetch("/api/execute-tool", {
+      const res = await fetch("https://mcpapi.vercel.app/api/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          executionId: activeEI?.execution_id || "bypass_key_attempt",
-          tool: selectedTool,
-          arg: toolArg
+          agent_id: "agent-atlas",
+          capability_id: selectedTool || "cap-db-write",
+          action: "execute",
+          input: { arg: toolArg }
         })
       });
       const data = await res.json();
@@ -421,12 +423,16 @@ export default function App() {
         setExecutionError(`HTTP 403 Forbidden: ${data.detail || "Validation check failed"}`);
         return;
       }
-      if (data.success) {
-        setExecutionResult(data);
+      if (data.verdict?.decision === "allow") {
+        setExecutionResult({
+          output: data.output?.response || "Executed via cAPI MCP successfully.",
+          proof: data.verdict?.proof,
+          cost: data.verdict?.cost
+        });
         fetchWalletInfo();
         fetchLedger();
       } else {
-        setExecutionError(data.error || "Secure execution failed");
+        setExecutionError(data.verdict?.reason || "Secure execution failed or was denied by cAPI governance");
       }
     } catch (e) {
       console.error(e);
@@ -477,6 +483,7 @@ export default function App() {
   };
 
   return (
+    <Shell>
     <div className="bg-[#020617] text-slate-100 min-h-screen font-sans flex flex-col selection:bg-cyan-500 selection:text-slate-900 border-t-2 border-cyan-500">
       
       {/* Dynamic Cover Frame & Status */}
@@ -1525,6 +1532,7 @@ export default function App() {
       </footer>
 
     </div>
+    </Shell>
   );
 }
 

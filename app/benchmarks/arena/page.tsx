@@ -43,6 +43,7 @@ import { PRESET_TEMPLATES } from "@/lib/benchmarks/templates";
 import CharacterCreator from "@/components/benchmarks/CharacterCreator";
 import AuthorityScenarios from "@/components/benchmarks/AuthorityScenarios";
 import { duelApi } from "@/lib/api";
+import Shell from "@/components/Shell";
 
 // Default Agents list if no template is loaded
 const DEFAULT_AGENTS: Agent[] = [
@@ -170,7 +171,7 @@ export default function App() {
     setApiError(null);
   };
 
-  // Run the ENTIRE Simulation automatically on the backend
+  // Run the ENTIRE Simulation automatically on the backend using real CAPI execution
   const handleRunFullSimulation = async () => {
     if (!inputPrompt.trim()) {
       setApiError("Please provide an initial start prompt first.");
@@ -179,24 +180,84 @@ export default function App() {
     setApiError(null);
     setIsSimulating(true);
     setSimulationStatus("running");
-    setSimulationLogs([]);
+    
+    // Start fresh logs
+    const newLogs: StepLog[] = [];
+    setSimulationLogs(newLogs);
     setActiveStepIndex(0);
 
     try {
-      const response = await duelApi<any>("/api/simulate", {
-        method: "POST",
-        body: {
-          input: inputPrompt,
-          workflowType,
-          agents,
-          steps: pipelineSteps,
-          discussionTurns,
-        },
-      });
+      let currentInput = inputPrompt;
+      const totalSteps = workflowType === "sequential" ? pipelineSteps.length : discussionTurns;
 
-      setSimulationLogs(response.logs || []);
+      for (let i = 0; i < totalSteps; i++) {
+        setActiveStepIndex(i);
+        
+        let currentAgent: Agent;
+        let stepInstruction = "";
+
+        if (workflowType === "sequential") {
+          const step = pipelineSteps[i];
+          currentAgent = agents.find(a => a.id === step.agentId) || agents[0];
+          stepInstruction = step.instruction;
+        } else {
+          currentAgent = agents[i % agents.length];
+          stepInstruction = "Collaborative response & brainstorming feedback loop.";
+        }
+
+        const prompt = `System Instruction: ${currentAgent.systemInstruction}\nStep Instruction: ${stepInstruction}\n\nContext/Previous Output: ${currentInput}`;
+
+        const start = Date.now();
+        // Call the real cAPI execution endpoint (the MCP governed layer)
+        const res = await fetch("https://mcpapi.vercel.app/api/request", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            agent_id: currentAgent.name.includes("Writer") ? "agent-scout" : "agent-atlas",
+            capability_id: "cap-summarize",
+            action: "execute",
+            input: {
+              prompt: prompt,
+              model: currentAgent.model || "gemini-3.5-flash",
+              temperature: currentAgent.temperature || 0.7
+            }
+          })
+        });
+
+        if (!res.ok) {
+          throw new Error(`Execution failed: ${res.statusText}`);
+        }
+
+        const data = await res.json();
+        const duration = Date.now() - start;
+        const output = data.verdict?.proof ? JSON.stringify(data.verdict.proof.hash) + "\\n" + (data.output?.response || "Executed via cAPI") : JSON.stringify(data);
+
+        const logEntry: StepLog = {
+          id: `log-${Date.now()}-${i}`,
+          agentId: currentAgent.id,
+          agentName: currentAgent.name,
+          agentRole: currentAgent.role,
+          avatar: currentAgent.avatar || "🤖",
+          color: currentAgent.color || "blue",
+          role: currentAgent.role,
+          inputUsed: currentInput,
+          output: output,
+          durationMs: duration,
+          modelUsed: currentAgent.model || "gemini-2.5-flash",
+          completedAt: new Date().toISOString()
+        };
+
+        newLogs.push(logEntry);
+        setSimulationLogs([...newLogs]); // Force re-render
+        
+        // Output becomes input for next step
+        currentInput = output;
+      }
+
       setSimulationStatus("completed");
-      setActiveStepIndex((response.logs || []).length);
+      setActiveStepIndex(totalSteps);
     } catch (err: any) {
       console.error(err);
       setApiError(err.message || "An unexpected error occurred during execution.");
@@ -218,7 +279,7 @@ export default function App() {
     setSimulationStatus("ready");
   };
 
-  // Run single manual step/turn in character
+  // Run single manual step/turn in character with real CAPI
   const handleExecuteSingleTurn = async () => {
     if (workflowType === "sequential" && activeStepIndex >= pipelineSteps.length) {
       setSimulationStatus("completed");
@@ -249,32 +310,63 @@ export default function App() {
         stepInstruction = "Collaborative response & brainstorming feedback loop.";
       }
 
-      const data = await duelApi<any>("/api/simulate/turn", {
+      // Output of previous step is input for this step (or the initial prompt)
+      const currentInput = simulationLogs.length > 0 ? simulationLogs[simulationLogs.length - 1].output : inputPrompt;
+      const prompt = `System Instruction: ${currentAgent.systemInstruction}\nStep Instruction: ${stepInstruction}\n\nContext/Previous Output: ${currentInput}`;
+
+      const start = Date.now();
+      const res = await fetch("/api/v1/exec", {
         method: "POST",
-        body: {
-          input: inputPrompt,
-          workflowType,
-          currentAgent,
-          historyLog: simulationLogs,
-          stepInstruction,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + (typeof window !== "undefined" ? window.localStorage.getItem("veklom.access_token") : "")
         },
+        body: JSON.stringify({
+          prompt: prompt,
+          model: currentAgent.model || "gemini-3.5-flash",
+          temperature: currentAgent.temperature || 0.7,
+          use_memory: false
+        })
       });
 
-      setSimulationLogs(prev => [...prev, data.log]);
-      const nextIndex = activeStepIndex + 1;
-      setActiveStepIndex(nextIndex);
+      if (!res.ok) {
+        throw new Error(`Execution failed: ${res.statusText}`);
+      }
 
-      // Check if finished
-      const maxSteps = workflowType === "sequential" ? pipelineSteps.length : discussionTurns;
-      if (nextIndex >= maxSteps) {
+      const data = await res.json();
+      const duration = Date.now() - start;
+      
+      const newLog: StepLog = {
+        id: `log-${Date.now()}`,
+        agentId: currentAgent.id,
+        agentName: currentAgent.name,
+        agentRole: currentAgent.role,
+        avatar: currentAgent.avatar || "🤖",
+        color: currentAgent.color || "blue",
+        role: currentAgent.role,
+        inputUsed: currentInput,
+        output: data.response || "No response received.",
+        durationMs: duration,
+        modelUsed: currentAgent.model || "gemini-3.5-flash",
+        completedAt: new Date().toISOString()
+      };
+
+      setSimulationLogs(prev => [...prev, newLog]);
+      setActiveStepIndex(prev => prev + 1);
+
+      // Complete if we reached the end
+      if (workflowType === "sequential" && activeStepIndex + 1 >= pipelineSteps.length) {
+        setSimulationStatus("completed");
+      } else if (workflowType === "collaboration" && activeStepIndex + 1 >= discussionTurns) {
         setSimulationStatus("completed");
       } else {
-        setSimulationStatus("ready");
+        setSimulationStatus("ready"); // Wait for next manual click
       }
+
     } catch (err: any) {
       console.error(err);
-      setApiError(err.message || "An unexpected error occurred during turn execution.");
-      setSimulationStatus("error");
+      setApiError(err.message || "An unexpected error occurred during the turn.");
+      setSimulationStatus(prevStatus); // revert
     } finally {
       setIsSimulating(false);
     }
@@ -495,10 +587,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#080808] text-[#e0e0e0] flex flex-col font-mono overflow-x-hidden antialiased relative">
-      
-      {/* Mesh dot background overlay */}
-      <div className="fixed inset-0 opacity-[0.035] pointer-events-none select-none bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:24px_24px] z-0"></div>
+    <Shell>
+      <div className="min-h-screen bg-transparent text-[#e0e0e0] flex flex-col font-mono overflow-x-hidden antialiased relative">
+        
+        {/* Mesh dot background overlay */}
+        <div className="fixed inset-0 opacity-[0.035] pointer-events-none select-none bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:24px_24px] z-0"></div>
 
       {/* HEADER SECTION */}
       <header className="border-b border-neutral-800 bg-neutral-900/20 backdrop-blur sticky top-0 z-30 px-6 py-4 flex flex-col md:flex-row items-stretch justify-between gap-6 z-10">
@@ -1011,6 +1104,21 @@ export default function App() {
                   <p className="text-[11px] text-neutral-500 mt-2.5 leading-relaxed lowercase">
                     Launch the automated production script to witness Gemini orchestrating step-by-step sequential feedback chains, or start the **Interactive Arena** to drive node-by-node executions manually.
                   </p>
+
+                  <div className="mt-5 p-4 bg-cyan-950/20 border border-cyan-900/40 rounded text-left shadow-[0_0_15px_rgba(6,182,212,0.05)]">
+                    <h5 className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse"></span>
+                      How This Enforcement Sandbox Works
+                    </h5>
+                    <p className="text-[10px] text-neutral-400 leading-relaxed mb-3 normal-case">
+                      Standard AI playgrounds only test if an LLM generates good text. The <strong>Veklom Arena</strong> tests if your autonomous agents behave safely within corporate boundaries.
+                    </p>
+                    <ul className="text-[10px] text-neutral-400 leading-relaxed list-disc pl-4 space-y-1 normal-case marker:text-cyan-800">
+                      <li><strong>Select a Scenario:</strong> Pick a threat model from the registry (e.g., Rogue Database Agent).</li>
+                      <li><strong>Run the Pipeline:</strong> Watch as the agent attempts autonomous actions using its tools.</li>
+                      <li><strong>Witness Enforcement:</strong> See the Authority Runtime intercept and block actions that violate security rules or budget limits before damage occurs.</li>
+                    </ul>
+                  </div>
                   
                   {/* Preset Quick Actions summary display */}
                   <div className="mt-6 flex flex-wrap gap-2.5 justify-center">
@@ -1406,12 +1514,13 @@ export default function App() {
       <footer className="border-t border-neutral-800 bg-black py-4 px-6 flex flex-col md:flex-row justify-between items-center text-[10px] text-neutral-500 uppercase tracking-[0.2em] gap-4 z-10 relative">
         <div>CLUSTER: US-CENTRAL-ALPHA</div>
         <div>SESSION UID: {Math.floor(1000 + Math.random() * 9000)}-AA{Math.floor(10 + Math.random() * 89)}-{Math.floor(1000 + Math.random() * 9000)}XB // UNRESTRICTED COGNITION DIRECTIVE</div>
-        <div className="flex gap-4">
-          <span className="text-cyan-900">SECURE PROCESSOR ISOLATION: ACTIVE</span>
-        </div>
+        <p className="max-w-4xl mx-auto">
+          Built securely on Veklom. CAPI Runtime Protocol Active. Authority verification continuous.
+        </p>
       </footer>
 
     </div>
+    </Shell>
   );
 }
 

@@ -1,0 +1,154 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  /* Cosmic Void & Neon Color Palette overrides */
+  --color-void-black: #030303;
+  --color-void-deep: #060608;
+  --color-void-charcoal: #0a0a0c;
+  --color-void-metal: #121215;
+  --color-electric-cyan: #00E5FF;
+  --color-matrix-emerald: #00FF66;
+  --color-hazard-amber: #FFAB00;
+  --color-laser-red: #FF003C;
+  --color-border-opacity: rgba(255, 255, 255, 0.05);
+  
+  --animate-scanline: scanline 8s linear infinite;
+  --animate-pulse-glow: pulse-glow 2.5s ease-in-out infinite;
+  --animate-fast-pulse: fast-pulse 1s ease-in-out infinite;
+  --animate-liquid-fill: liquid-fill 2s ease-in-out infinite;
+  --animate-matrix-green: matrix-green 20s linear infinite;
+}
+
+@keyframes active-pulsing-shadow {
+  0%, 100% {
+    box-shadow: 0 0 8px 1.5px rgba(180, 245, 255, 0.45);
+    border-color: rgba(0, 229, 255, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 18px 4px rgba(180, 245, 255, 0.85);
+    border-color: rgba(0, 229, 255, 0.6);
+  }
+}
+
+.active-glow-node {
+  animation: active-pulsing-shadow 3.5s ease-in-out infinite;
+  border-radius: 9999px;
+  will-change: box-shadow, border-color;
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(0, 229, 255, 0.15);
+    border-color: rgba(0, 229, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(0, 229, 255, 0.35);
+    border-color: rgba(0, 229, 255, 0.5);
+  }
+}
+
+@keyframes fast-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@keyframes liquid-fill {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes matrix-green {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 0% 100%; }
+}
+
+/* Base style resets and customizations */
+body {
+  background-color: #030303;
+  color: #f3f4f6;
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  letter-spacing: -0.01em;
+}
+
+/* Custom cinematic glass styles */
+.obsidian-glass {
+  background: rgba(10, 10, 12, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.obsidian-glass-interactive {
+  background: rgba(10, 10, 12, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.obsidian-glass-interactive:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(0, 229, 255, 0.2);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.08);
+}
+
+/* Glowing text shadows */
+.text-glow-cyan {
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
+}
+
+.text-glow-emerald {
+  text-shadow: 0 0 8px rgba(0, 255, 102, 0.6);
+}
+
+.text-glow-amber {
+  text-shadow: 0 0 8px rgba(255, 171, 0, 0.6);
+}
+
+.text-glow-red {
+  text-shadow: 0 0 8px rgba(255, 0, 60, 0.6);
+}
+
+/* Grid overlay background to resemble high-end NOC grid screens */
+.grid-overlay {
+  background-size: 30px 30px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+}
+
+/* Hide default scrollbars & style custom scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #030303;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 255, 0.3);
+}
+
+/* No browser outline focus rings, neon highlight instead */
+*:focus {
+  outline: none;
+}
+

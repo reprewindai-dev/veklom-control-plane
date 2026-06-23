@@ -6,6 +6,7 @@ import MatrixTable from './components/MatrixTable';
 import SimulationWorkspace from './components/SimulationWorkspace';
 import ConsoleTerminal from './components/ConsoleTerminal';
 import { ShieldCheck, HardDrive, Cpu, Activity, Clock, ShieldX, Flame } from 'lucide-react';
+import Shell from '@/components/Shell';
 
 export default function App() {
   const [selectedEventId, setSelectedEventId] = useState<string>(FAULT_MATRIX_DATA[0].id);
@@ -59,10 +60,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fafbfc] text-slate-800 font-sans flex flex-col antialiased">
+    <Shell>
+    <div className="min-h-screen bg-transparent text-slate-100 font-sans flex flex-col antialiased">
       
       {/* Top Professional Header Banner */}
-      <header className="border-b border-slate-100 bg-white shadow-xs px-6 py-4 flex flex-col sm:flex-row gap-4 items-center justify-between sticky top-0 z-50">
+      <header className="border-b border-slate-800 bg-slate-900/40 shadow-xs px-6 py-4 flex flex-col sm:flex-row gap-4 items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-md shadow-indigo-100 shrink-0">
             <Activity className="w-5 h-5 animate-pulse" />
@@ -192,12 +194,13 @@ export default function App() {
       </main>
 
       {/* Modern Humble Footer */}
-      <footer className="border-t border-slate-100 bg-white py-4 px-6 text-center text-xs text-slate-400 font-mono mt-auto flex flex-col md:flex-row gap-2.5 items-center justify-between">
+      <footer className="border-t border-slate-800 bg-slate-900/40 py-4 px-6 text-center text-xs text-slate-400 font-mono mt-auto flex flex-col md:flex-row gap-2.5 items-center justify-between">
         <span>Systems Integrity Auditing Framework</span>
         <span>Standard ISO/IEC IEEE 754 Compiler Compliant Layout</span>
       </footer>
 
     </div>
+    </Shell>
   );
 }
 

@@ -20,5 +20,13 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "**/*.test.ts", "**/*.test.tsx"]
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "components/terminal/data/veklom-agents",
+    "components/terminal/main.tsx",
+    "components/terminal/setupTests.ts",
+    "components/terminal/vite-env.d.ts"
+  ]
 }

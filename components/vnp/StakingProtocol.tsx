@@ -132,12 +132,12 @@ export default function StakingProtocol({ apis }: StakingProtocolProps) {
   const [isRegistering, setIsRegistering] = useState(false);
 
   const connectWallet = async () => {
-    if (typeof window.ethereum === "undefined") {
+    if (typeof (window as any).ethereum === "undefined") {
       alert("Please install MetaMask to connect your wallet.");
       return;
     }
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum as any);
+      const provider = new ethers.BrowserProvider((window as any).ethereum);
       await provider.send("eth_requestAccounts", []);
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
@@ -151,7 +151,7 @@ export default function StakingProtocol({ apis }: StakingProtocolProps) {
     if (!walletAddress) return;
     setIsRegistering(true);
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum as any);
+      const provider = new ethers.BrowserProvider((window as any).ethereum);
       const signer = await provider.getSigner();
       
       const message = `Register Veklom Verifier Node\nAddress: ${walletAddress}\nNonce: ${Date.now()}`;

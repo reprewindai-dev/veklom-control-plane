@@ -33,6 +33,7 @@ export interface StepLog {
   id: string;
   agentId: string;
   agentName: string;
+  agentRole?: string;
   avatar: string;
   color: string;
   role: string;
