@@ -289,6 +289,12 @@ export default function PGLOnboardingPage() {
               >
                 {step === 0 && (
                   <div className="space-y-5">
+                    <div className="mb-6 p-4 rounded-xl bg-brand-500/10 border border-brand-500/20">
+                      <h4 className="text-sm font-semibold text-brand-400 mb-1">Why this matters</h4>
+                      <p className="text-xs text-brand-400/80 leading-relaxed">
+                        Establishing a cryptographically bound Operator Identity ensures that all autonomous actions trace back to an authorized human. This prevents unauthorized usage and guarantees compliance with enterprise security models.
+                      </p>
+                    </div>
                     <Field
                       label="Full Name"
                       value={operator.name}
@@ -306,6 +312,12 @@ export default function PGLOnboardingPage() {
 
                 {step === 1 && (
                   <div className="space-y-6">
+                    <div className="mb-4 p-4 rounded-xl bg-brand-500/10 border border-brand-500/20">
+                      <h4 className="text-sm font-semibold text-brand-400 mb-1">Architectural Isolation</h4>
+                      <p className="text-xs text-brand-400/80 leading-relaxed">
+                        Authority levels dictate row-level security (RLS) deep within the database. By strictly defining compliance frameworks and authority here, you guarantee that even if an agent goes rogue, it is mathematically isolated from your core infrastructure.
+                      </p>
+                    </div>
                     <Field
                       label="Workspace Designation"
                       value={workspace.name}
@@ -350,6 +362,12 @@ export default function PGLOnboardingPage() {
 
                 {step === 2 && (
                   <div className="space-y-5">
+                    <div className="mb-4 p-4 rounded-xl bg-brand-500/10 border border-brand-500/20">
+                      <h4 className="text-sm font-semibold text-brand-400 mb-1">Unforgeable AI Identity</h4>
+                      <p className="text-xs text-brand-400/80 leading-relaxed">
+                        Unlike traditional API keys, this certificate is cryptographically fused to the agent's behavior pattern. If an unknown entity attempts to execute under this name, the runtime enforcement network will instantly terminate the connection.
+                      </p>
+                    </div>
                     <Field
                       label="Agent Designation"
                       value={agent.name}
@@ -390,6 +408,12 @@ export default function PGLOnboardingPage() {
 
                 {step === 3 && (
                   <div className="space-y-8">
+                    <div className="mb-2 p-4 rounded-xl bg-brand-500/10 border border-brand-500/20">
+                      <h4 className="text-sm font-semibold text-brand-400 mb-1">The Laws of Physics for Your Agent</h4>
+                      <p className="text-xs text-brand-400/80 leading-relaxed">
+                        These are not soft prompts. The Genome defines the absolute capabilities and hard constraints enforced at the network proxy layer. If an agent tries to use an unapproved tool, the packet is dropped before it reaches the target.
+                      </p>
+                    </div>
                     <div>
                       <label className="text-xs font-semibold text-ink-400 uppercase tracking-wider block mb-3">
                         Tool Access
@@ -460,6 +484,13 @@ export default function PGLOnboardingPage() {
 
                 {step === 4 && (
                   <div className="space-y-4">
+                    <div className="mb-2 p-4 rounded-xl bg-brand-500/10 border border-brand-500/20">
+                      <h4 className="text-sm font-semibold text-brand-400 mb-1">Your Mathematical Truth</h4>
+                      <p className="text-xs text-brand-400/80 leading-relaxed">
+                        The ledger root forms the unalterable foundation of your evidence chain. 
+                        Every subsequent action, proof, and execution by this agent will be cryptographically hashed to this block. You now have mathematical proof of what your agents do, eliminating liability and enabling trust.
+                      </p>
+                    </div>
                     <div className="p-6 rounded-xl bg-[#0a0a0a] border border-white/5 relative overflow-hidden group">
                       <div className="absolute inset-0 bg-gradient-to-r from-brand-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                       <div className="flex items-center gap-4">
@@ -476,10 +507,6 @@ export default function PGLOnboardingPage() {
                         </div>
                       </div>
                     </div>
-                    <p className="text-sm text-ink-400 leading-relaxed px-2">
-                      The ledger root forms the unalterable foundation of your evidence chain. 
-                      Every subsequent action, proof, and execution by this agent will be cryptographically hashed to this block.
-                    </p>
                   </div>
                 )}
 
