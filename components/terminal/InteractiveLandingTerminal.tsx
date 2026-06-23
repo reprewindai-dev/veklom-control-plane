@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Terminal as TerminalIcon, ChevronRight, CheckCircle2, AlertTriangle, Play, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface TerminalLine {
   text: string;
@@ -103,9 +104,15 @@ export default function InteractiveLandingTerminal() {
   return (
     <div className="relative w-full max-w-4xl mx-auto z-20">
       {/* Glow effect */}
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/30 to-violet-500/30 blur-2xl opacity-50 rounded-2xl" />
+      <motion.div 
+        animate={{ opacity: isFocused ? 0.7 : 0.4 }}
+        className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/30 to-violet-500/30 blur-2xl rounded-2xl" 
+      />
       
-      <div 
+      <motion.div 
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: "spring", bounce: 0.2, duration: 0.8 }}
         className={`relative bg-[#0A0A0A]/80 backdrop-blur-xl border ${isFocused ? 'border-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.15)]' : 'border-[#1A1A1A]'} rounded-2xl overflow-hidden transition-all duration-300`}
         onClick={() => inputRef.current?.focus()}
       >
@@ -128,26 +135,32 @@ export default function InteractiveLandingTerminal() {
           className="p-6 h-[400px] overflow-y-auto font-mono text-sm sm:text-base custom-scrollbar"
         >
           <div className="space-y-2">
-            {lines.map((line, i) => (
-              <div key={i} className={`
-                ${line.type === 'input' ? 'text-white' : ''}
-                ${line.type === 'output' ? 'text-[#A1A1A6]' : ''}
-                ${line.type === 'system' ? 'text-blue-400' : ''}
-                ${line.type === 'success' ? 'text-emerald-400' : ''}
-                ${line.type === 'error' ? 'text-rose-400' : ''}
-                ${line.type === 'warning' ? 'text-amber-400' : ''}
-                flex items-start gap-2 break-all
-              `}>
-                {line.type === 'success' && <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />}
-                {line.type === 'error' && <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />}
-                {line.type === 'system' && <Play className="w-4 h-4 shrink-0 mt-0.5" />}
-                <span>{line.text}</span>
-              </div>
-            ))}
+            <AnimatePresence>
+              {lines.map((line, i) => (
+                <motion.div 
+                  key={i} 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className={`
+                  ${line.type === 'input' ? 'text-white' : ''}
+                  ${line.type === 'output' ? 'text-[#A1A1A6]' : ''}
+                  ${line.type === 'system' ? 'text-blue-400' : ''}
+                  ${line.type === 'success' ? 'text-emerald-400' : ''}
+                  ${line.type === 'error' ? 'text-rose-400' : ''}
+                  ${line.type === 'warning' ? 'text-amber-400' : ''}
+                  flex items-start gap-2 break-all
+                `}>
+                  {line.type === 'success' && <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />}
+                  {line.type === 'error' && <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />}
+                  {line.type === 'system' && <Play className="w-4 h-4 shrink-0 mt-0.5" />}
+                  <span>{line.text}</span>
+                </motion.div>
+              ))}
+            </AnimatePresence>
 
             {/* Input Line */}
             {!isBooting && (
-              <div className="flex items-center text-white mt-4">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center text-white mt-4">
                 <span className="text-emerald-400 mr-2 shrink-0">guest@veklom-edge:~$</span>
                 <input
                   ref={inputRef}
@@ -162,7 +175,7 @@ export default function InteractiveLandingTerminal() {
                   autoComplete="off"
                   spellCheck="false"
                 />
-              </div>
+              </motion.div>
             )}
             
             {/* Blinking cursor effect when waiting during boot */}

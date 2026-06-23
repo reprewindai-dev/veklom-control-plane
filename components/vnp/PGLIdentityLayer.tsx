@@ -101,7 +101,7 @@ export default function PGLIdentityLayer({ scores }: PGLIdentityLayerProps) {
   useEffect(() => {
     (async () => {
       try {
-        const data = await api<PGLStatus>("/api/v1/pgl/status");
+        const data = await api<PGLStatus>("/api/v1/genome/status");
         setPglStatus(data);
       } catch {
         setPglStatus({
