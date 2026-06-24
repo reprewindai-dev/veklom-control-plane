@@ -156,7 +156,7 @@ export default function App() {
         <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          mcpHeartbeat={liveMetrics.mcpIOHeartbeat}
+          mcpHeartbeat={liveMetrics?.mcpIOHeartbeat}
           throughput={liveMetrics.throughput}
           agentsCount={agents.length}
         />
