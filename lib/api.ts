@@ -107,6 +107,21 @@ export async function api<T>(path: string, opts: RequestOpts = {}): Promise<T> {
       (json && (json.detail || json.message || json.error)) ||
       res.statusText ||
       `HTTP ${res.status}`;
+      
+    // Enterprise Hardening: Automatic PGL/Budget enforcement routing
+    if (typeof window !== "undefined") {
+      if (res.status === 402) {
+        window.location.href = "/wallet";
+      } else if (res.status === 403) {
+        // Governance lock - redirect to Trust / Security center or login
+        if (msg.toLowerCase().includes("token") || msg.toLowerCase().includes("auth")) {
+          window.location.href = "/login";
+        } else {
+          window.location.href = "/governance";
+        }
+      }
+    }
+
     throw new ApiError(res.status, String(msg), json);
   }
   return json as T;

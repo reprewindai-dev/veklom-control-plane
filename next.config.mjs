@@ -22,8 +22,14 @@ const nextConfig = {
   async rewrites() {
     return [
       {
+        // PGL ledger calls go to the dedicated ledger service
         source: "/api/v1/ledger/:path*",
         destination: "https://pgl.veklom.com/api/v1/ledger/:path*",
+      },
+      {
+        // Quantum Terminal static assets + WS — proxied to the backend terminal endpoint
+        source: "/terminal/:path*",
+        destination: `${BACKEND_URL}/terminal/:path*`,
       },
       {
         // All /api/* calls from the browser are proxied to the backend.

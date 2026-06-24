@@ -111,6 +111,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const access = res.access_token || res.token;
     if (access) {
       setTokens(access, res.refresh_token);
+      
+      // HARDENED PGL ONBOARDING: Force mathematical binding of identity
+      try {
+        await api("/api/v1/pgl/onboarding/operator-identity", { 
+          method: "POST",
+          body: { operator_name: name || "Sovereign Operator", role: "OWNER" }
+        });
+        await api("/api/v1/pgl/onboarding/workspace-authority", {
+          method: "POST",
+          body: { workspace_name: "Default Workspace", network_zone: "VNP-Global" }
+        });
+      } catch (e) {
+        console.warn("PGL Identity initialization warning:", e);
+        // Continue anyway so the user isn't fully blocked
+      }
+
       await loadProfile();
       return { autoSignedIn: true };
     }
