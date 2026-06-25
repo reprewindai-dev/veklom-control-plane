@@ -134,10 +134,15 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const { me, sub, tier, logout, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !me) router.replace("/login");
   }, [loading, me, router]);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   if (loading) {
     return (
@@ -231,6 +236,16 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 w-full">
         <header className="sticky top-0 z-20 h-14 border-b border-border glass flex items-center px-4 gap-3">
+          {/* Mobile menu */}
+          <button
+            type="button"
+            aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
+            onClick={() => setMobileOpen((prev) => !prev)}
+            className="inline-flex items-center justify-center rounded-lg border border-border bg-bg-900/80 p-2 text-ink-300 transition hover:bg-white/[0.06] lg:hidden"
+          >
+            {mobileOpen ? <Icons.X size={18} /> : <Icons.Menu size={18} />}
+          </button>
+
           {/* Env chips */}
           <div className="hidden md:flex items-center gap-1.5">
             <EnvChip>{(activeUser.org_name || activeUser.org_id || (activeUser.email || "").split("@")[0] || "workspace").toUpperCase()}</EnvChip>
@@ -265,6 +280,85 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </header>
+        {mobileOpen && (
+          <div className="fixed inset-0 z-40 lg:hidden">
+            <div className="absolute inset-0 bg-black/55" onClick={() => setMobileOpen(false)} />
+            <aside className="relative z-50 h-full w-[min(92vw,320px)] border-r border-border bg-bg-900/98 p-4 overflow-y-auto shadow-2xl">
+              <div className="flex items-center justify-between mb-5">
+                <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-2">
+                  <LogoWordmark height={20} className="mt-0.5" />
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setMobileOpen(false)}
+                  aria-label="Close navigation"
+                  className="inline-flex items-center justify-center rounded-lg border border-border bg-bg-900/80 p-2 text-ink-300 transition hover:bg-white/[0.06]"
+                >
+                  <Icons.X size={18} />
+                </button>
+              </div>
+              <nav className="space-y-5">
+                {orderedGroups.map((g) => {
+                  if (!groups[g]) return null;
+                  if (g === "admin" && !activeUser.is_superuser) return null;
+                  return (
+                    <div key={g}>
+                      <div className="px-2 text-[9px] uppercase tracking-[0.18em] text-ink-600 mb-1.5 font-semibold">
+                        {GROUP_TITLES[g]}
+                      </div>
+                      <ul className="space-y-0.5">
+                        {groups[g].map((m) => {
+                          const active = pathname?.startsWith(m.href);
+                          const locked = !meetsTier(tier, m.minTier);
+                          return (
+                            <li key={m.slug}>
+                              <Link
+                                href={m.href}
+                                onClick={() => setMobileOpen(false)}
+                                className={clsx(
+                                  "group relative flex items-center gap-2.5 px-2.5 py-[10px] rounded-lg text-[13px] transition",
+                                  active
+                                    ? "bg-brand-500/[0.12] text-ink-50"
+                                    : "text-ink-200 hover:bg-white/[0.04] hover:text-ink-50",
+                                  locked && "opacity-55"
+                                )}
+                              >
+                                {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-[2px] rounded-full bg-brand-400" />}
+                                <Icon name={m.icon} size={15} className={active ? "text-brand-400" : "text-ink-400 group-hover:text-ink-200"} />
+                                <span className="flex-1 truncate">{m.label}</span>
+                                {LIVE_SLUGS.has(m.slug) && !locked && (
+                                  <span className="flex items-center gap-1 text-[8px] font-bold tracking-wider text-accent-green">
+                                    <span className="w-1 h-1 rounded-full bg-accent-green animate-pulse" />LIVE
+                                  </span>
+                                )}
+                                {locked && <Icons.Lock size={11} className="text-ink-600" />}
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </nav>
+              <div className="mt-5 rounded-xl border border-border bg-white/[0.02] p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] uppercase tracking-[0.16em] text-ink-400 font-semibold">Sovereign Mode</span>
+                  <span className="flex items-center gap-1 text-[8px] font-bold tracking-wider text-accent-green">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent-green" />ON-PREM
+                  </span>
+                </div>
+                <p className="mt-2 text-[10.5px] leading-snug text-ink-500">
+                  Every request evaluated by policy on Hetzner. AWS burst gated by tenant rule.
+                </p>
+                <div className="mt-2.5 flex items-center gap-1.5">
+                  <Pill tone="amber">Hetzner</Pill>
+                  <Pill tone="cyan">AWS</Pill>
+                </div>
+              </div>
+            </aside>
+          </div>
+        )}
         <main className="flex-1 p-6 overflow-y-auto scroll-thin">{children}</main>
       </div>
     </div>
