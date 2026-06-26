@@ -1,21 +1,20 @@
 "use client";
-export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import dynamic from "next/dynamic";
+import dynamicImport from "next/dynamic";
 import { ArrowRight, Shield, Globe, Zap, Server, Activity, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 
 // These components use useSWR + browser APIs — must skip SSR or the build explodes
-const InteractiveLandingTerminal = dynamic(
+const InteractiveLandingTerminal = dynamicImport(
   () => import("@/components/terminal/InteractiveLandingTerminal"),
   { ssr: false, loading: () => <div className="h-64 bg-white/5 rounded-xl animate-pulse" /> }
 );
-const NetworkTopologyPanel = dynamic(
+const NetworkTopologyPanel = dynamicImport(
   () => import("@/components/vnp/NetworkTopologyPanel"),
   { ssr: false, loading: () => <div className="h-[500px] bg-white/5 rounded-xl animate-pulse" /> }
 );
-const StakingProtocol = dynamic(
+const StakingProtocol = dynamicImport(
   () => import("@/components/vnp/StakingProtocol"),
   { ssr: false, loading: () => <div className="h-48 bg-white/5 rounded-xl animate-pulse" /> }
 );
