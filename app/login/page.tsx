@@ -20,7 +20,7 @@ export default function LoginPage() {
     setBusy(true); setErr(undefined);
     try {
       await login(email, pw);
-      router.replace("/dashboard");
+      router.replace("/onboarding/pgl");
     } catch (e) {
       setErr((e as Error).message);
       setBusy(false);

@@ -9,6 +9,7 @@ interface PeerNode {
   name: string;
   region: string;
   status: "LEADER" | "ATTESTING" | "CHALLENGED" | "STANDBY";
+  status_str?: string;
   x: number;
   y: number;
   stakeUsd: number;

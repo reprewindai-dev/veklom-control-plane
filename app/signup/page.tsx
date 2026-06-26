@@ -32,8 +32,8 @@ export default function SignupPage() {
     try {
       const { autoSignedIn } = await signup(email, pw, name || undefined);
       if (autoSignedIn) {
-        setOk("Account created. Taking you to your dashboard…");
-        router.replace("/dashboard");
+        setOk("Account created. Taking you to your workspace onboarding…");
+        router.replace("/onboarding/pgl");
       } else {
         setOk("Account created. Please sign in to continue.");
         setTimeout(() => router.replace("/login"), 1400);
