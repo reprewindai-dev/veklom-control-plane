@@ -16,8 +16,8 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
   );
 }
 
-export function Card({ children, className, hover }: { children: ReactNode; className?: string; hover?: boolean }) {
-  return <div className={clsx("card p-5", hover && "card-hover", className)}>{children}</div>;
+export function Card({ children, className, hover, onClick }: { children: ReactNode; className?: string; hover?: boolean; onClick?: () => void }) {
+  return <div onClick={onClick} className={clsx("card p-5", hover && "card-hover", className)}>{children}</div>;
 }
 
 export function StatCard({ label, value, hint, accent }: { label: string; value: ReactNode; hint?: string; accent?: string }) {

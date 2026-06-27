@@ -209,9 +209,9 @@ export default function App() {
 
         const start = Date.now();
         // Call the real cAPI execution endpoint (the MCP governed layer)
-        const res = await api("/api/v1/capi/execute", {
+        const data = await api<any>("/api/v1/capi/execute", {
           method: "POST",
-          body: JSON.stringify({
+          body: {
             agent_id: currentAgent.name.includes("Writer") ? "agent-scout" : "agent-atlas",
             pgl_id: "PGL-SYSTEM",
             target_protocol: "cap-summarize",
@@ -221,13 +221,8 @@ export default function App() {
               model: currentAgent.model || "gemini-3.5-flash",
               temperature: currentAgent.temperature || 0.7
             }
-          })
+          }
         });
-
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(`Execution failed: ${data.detail?.message || res.statusText}`);
-        }
 
         const duration = data.result?.real_execution?.latency_ms || Date.now() - start;
         const output = data.status === "EXECUTED" 

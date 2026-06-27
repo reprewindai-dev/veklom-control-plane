@@ -32,7 +32,7 @@ export function SekedConsole() {
       
       <div className="flex-1 space-y-4">
         {/* Real Backend Data Segment */}
-        {error && <ErrorBox error={error} title="Failed to load SEKED Metrics" />}
+        {error && <ErrorBox message={error.message || "Failed to load SEKED Metrics"} />}
         {agents && agents.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-xs font-semibold text-ink-300 uppercase tracking-wider mb-2">Live Execution Confidence</h3>

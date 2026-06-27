@@ -35,18 +35,18 @@ export function PglLineageTracker() {
       </div>
       <p className="text-sm text-ink-300 mb-4">Identity & Forensics: Map of certified, governed AI identities tracing exact operational rights.</p>
       
-      {error && <ErrorBox error={error} title="Failed to load PGL Registry" />}
+      {error && <ErrorBox message={error.message || "Failed to load PGL Registry"} />}
       
       <div className="flex-1 overflow-auto">
         <Table
           rows={displayData}
-          rowKey={(r) => r.id}
+          rowKey={(r: any) => r.id}
           columns={[
-            { key: "cert", header: "PGL Anchor", render: (r) => <span className="font-mono text-xs text-brand-300">{r.id}</span> },
-            { key: "agent", header: "Genome", render: (r) => <span className="text-white font-medium">{r.agent}</span> },
-            { key: "workspace", header: "Workspace", render: (r) => <span className="text-ink-300 font-mono text-xs">{r.workspace}</span> },
-            { key: "action", header: "Status/Action", render: (r) => r.action },
-            { key: "time", header: "Time", render: (r) => <span className="text-ink-400">{r.time}</span> },
+            { key: "cert", header: "PGL Anchor", render: (r: any) => <span className="font-mono text-xs text-brand-300">{r.id}</span> },
+            { key: "agent", header: "Genome", render: (r: any) => <span className="text-white font-medium">{r.agent}</span> },
+            { key: "workspace", header: "Workspace", render: (r: any) => <span className="text-ink-300 font-mono text-xs">{r.workspace}</span> },
+            { key: "action", header: "Status/Action", render: (r: any) => r.action },
+            { key: "time", header: "Time", render: (r: any) => <span className="text-ink-400">{r.time}</span> },
           ]}
         />
       </div>

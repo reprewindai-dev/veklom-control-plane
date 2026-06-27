@@ -74,10 +74,10 @@ interface StakingMarket {
 // ============ Main Component ============
 
 interface StakingProtocolProps {
-  apis: BenchmarkApiEntry[];
+  apis?: BenchmarkApiEntry[];
 }
 
-export default function StakingProtocol({ apis }: StakingProtocolProps) {
+export default function StakingProtocol({ apis = [] }: StakingProtocolProps) {
   // ---- Markets ----
   const { data: marketData, mutate: mutateMarkets } = useSWR<StakingMarket[]>(
     "/api/v1/x402/staking/markets",

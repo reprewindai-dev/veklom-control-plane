@@ -164,6 +164,9 @@ export interface MicroStakeHeader {
   agent: string;
   nonce: string;
   signature: string;
+}
+
+/**
  * Veklom Nexus Protocol (VNP) v0.1 — Core Type Definitions
  *
  * Aligned to the locked VNP Methodology Specification v0.1.
