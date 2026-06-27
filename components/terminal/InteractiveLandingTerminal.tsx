@@ -106,14 +106,14 @@ export default function InteractiveLandingTerminal() {
       {/* Glow effect */}
       <motion.div 
         animate={{ opacity: isFocused ? 0.7 : 0.4 }}
-        className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/30 to-violet-500/30 blur-2xl rounded-2xl" 
+        className="absolute -inset-0.5 bg-gradient-to-r from-[#FFB800]/20 to-[#FFB800]/10 blur-2xl rounded-2xl" 
       />
       
       <motion.div 
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", bounce: 0.2, duration: 0.8 }}
-        className={`relative bg-[#0A0A0A]/80 backdrop-blur-xl border ${isFocused ? 'border-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.15)]' : 'border-[#1A1A1A]'} rounded-2xl overflow-hidden transition-all duration-300`}
+        className={`relative bg-[#0A0A0A]/80 backdrop-blur-xl border ${isFocused ? 'border-[#FFB800]/50 shadow-[0_0_30px_rgba(255,184,0,0.15)]' : 'border-[#1A1A1A]'} rounded-2xl overflow-hidden transition-all duration-300`}
         onClick={() => inputRef.current?.focus()}
       >
         {/* Terminal Header */}
@@ -144,7 +144,7 @@ export default function InteractiveLandingTerminal() {
                   className={`
                   ${line.type === 'input' ? 'text-white' : ''}
                   ${line.type === 'output' ? 'text-[#A1A1A6]' : ''}
-                  ${line.type === 'system' ? 'text-blue-400' : ''}
+                  ${line.type === 'system' ? 'text-[#FFB800]' : ''}
                   ${line.type === 'success' ? 'text-emerald-400' : ''}
                   ${line.type === 'error' ? 'text-rose-400' : ''}
                   ${line.type === 'warning' ? 'text-amber-400' : ''}
@@ -187,11 +187,11 @@ export default function InteractiveLandingTerminal() {
         
         {/* Call To Action overlay */}
         <div className={`absolute bottom-0 left-0 w-full p-4 transition-all duration-500 transform ${showCTA ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}>
-          <div className="bg-gradient-to-r from-blue-600 to-violet-600 p-[1px] rounded-xl shadow-2xl">
+          <div className="bg-gradient-to-r from-[#FFB800] to-[#E0A100] p-[1px] rounded-xl shadow-2xl">
             <div className="bg-[#0A0A0A] rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
-                  <Lock className="w-5 h-5 text-blue-400" />
+                <div className="w-10 h-10 rounded-full bg-[#FFB800]/20 flex items-center justify-center shrink-0">
+                  <Lock className="w-5 h-5 text-[#FFB800]" />
                 </div>
                 <div>
                   <h4 className="text-white font-medium">Ready to deploy real agents?</h4>

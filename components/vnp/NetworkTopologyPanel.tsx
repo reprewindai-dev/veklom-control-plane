@@ -63,7 +63,20 @@ export default function NetworkTopologyPanel() {
       setSafetyGuardActive(topology.safetyGuardActive ?? true);
     }
   }, [topology]);
-  const selectedNode = nodes.find(n => n.id === selectedNodeId) || nodes[0];
+  const DEFAULT_NODE: PeerNode = {
+    id: "peer-1",
+    name: "validator-us-east",
+    region: "us-east-1",
+    status: "STANDBY",
+    x: 100,
+    y: 100,
+    stakeUsd: 100000,
+    cpuMs: 0.1,
+    poolUtilization: 10,
+    version: "v0.1.0",
+    tenantLock: "default"
+  };
+  const selectedNode = nodes.find(n => n.id === selectedNodeId) || nodes[0] || DEFAULT_NODE;
 
   // Animate packets flowing between nodes
   useEffect(() => {
@@ -335,7 +348,7 @@ export default function NetworkTopologyPanel() {
               }
 
               if (isSelected) {
-                borderStroke = "#6366f1";
+                borderStroke = "#FFB800";
               }
 
               return (
@@ -355,7 +368,7 @@ export default function NetworkTopologyPanel() {
                       cy="0"
                       r="20"
                       fill="none"
-                      stroke="#6366f1"
+                      stroke="#FFB800"
                       strokeWidth="1.5"
                       strokeDasharray="4,3"
                       className="animate-spin"
@@ -402,7 +415,7 @@ export default function NetworkTopologyPanel() {
                   <text
                     x="0"
                     y="25"
-                    fill={isSelected ? "#818cf8" : n.status === "CHALLENGED" ? "#f87171" : "#94a3b8"}
+                    fill={isSelected ? "#FFB800" : n.status === "CHALLENGED" ? "#f87171" : "#94a3b8"}
                     fontSize="8.5"
                     textAnchor="middle"
                     className="font-bold tracking-tight select-none opacity-85 group-hover:opacity-100"
@@ -446,7 +459,7 @@ export default function NetworkTopologyPanel() {
         {/* Validator HUD Inspector Details */}
         <div className="bg-slate-950 border border-slate-900 rounded-2xl p-5 space-y-4">
           <div className="flex items-center gap-2 border-b border-slate-900 pb-3">
-            <Server className={`${selectedNode.status === "LEADER" ? "text-emerald-400 animate-pulse" : selectedNode.status === "CHALLENGED" ? "text-red-400 animate-spin" : "text-blue-400"} w-5 h-5`} />
+            <Server className={`${selectedNode.status === "LEADER" ? "text-emerald-400 animate-pulse" : selectedNode.status === "CHALLENGED" ? "text-red-400 animate-spin" : "text-[#FFB800]"} w-5 h-5`} />
             <div>
               <span className="text-[8px] uppercase tracking-wider text-slate-500 font-bold block">Consensus HUD Node</span>
               <h3 className="text-xs font-bold text-slate-100">{selectedNode.name}</h3>
@@ -458,7 +471,7 @@ export default function NetworkTopologyPanel() {
                 ? "bg-red-950/40 text-red-300 border-red-500/20 animate-pulse"
                 : selectedNode.status === "STANDBY"
                 ? "bg-slate-900 text-slate-400 border-slate-800"
-                : "bg-blue-900/10 text-blue-300 border-blue-500/20"
+                : "bg-[#FFB800]/10 text-[#FFB800] border-[#FFB800]/20"
             }`}>
               {selectedNode.status_str || selectedNode.status}
             </span>
@@ -483,11 +496,11 @@ export default function NetworkTopologyPanel() {
             <div className="space-y-1 bg-[#111827]/40 p-2.5 rounded border border-slate-900">
               <div className="flex justify-between text-[9px]">
                 <span className="text-slate-500 lowercase">sqlx::Pool idle warm connections:</span>
-                <span className="text-blue-300 font-bold">{selectedNode.poolUtilization}% utilization</span>
+                <span className="text-[#FFB800] font-bold">{selectedNode.poolUtilization}% utilization</span>
               </div>
               <div className="w-full bg-slate-950 h-1 rounded-full overflow-hidden">
                 <div 
-                  className={`h-full rounded-full transition-all duration-500 ${selectedNode.status === "CHALLENGED" ? "bg-red-500" : "bg-blue-500"}`} 
+                  className={`h-full rounded-full transition-all duration-500 ${selectedNode.status === "CHALLENGED" ? "bg-red-500" : "bg-[#FFB800]"}`} 
                   style={{ width: `${selectedNode.poolUtilization}%` }}
                 />
               </div>

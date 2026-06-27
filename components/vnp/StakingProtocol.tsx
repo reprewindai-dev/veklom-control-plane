@@ -100,7 +100,13 @@ export default function StakingProtocol({ apis = [] }: StakingProtocolProps) {
   const settlements: EpochSettlement[] = stateData?.settlements || [];
   const verifiers: VerifierNode[] = stateData?.verifiers || [];
   const kdeCurves = stateData?.kdeCurves || {};
-  const VNP_PARAMS = stateData?.vnpParams || { k: 3, lambda: 2.0 };
+  const VNP_PARAMS = {
+    k: stateData?.vnpParams?.k ?? 3,
+    lambda: stateData?.vnpParams?.lambda ?? 2.0,
+    challengeTierA: stateData?.vnpParams?.challengeTierA || { min: 10, max: 500 },
+    challengeTierB: stateData?.vnpParams?.challengeTierB || { min: 1000, max: 50000 },
+    consensusWeights: stateData?.vnpParams?.consensusWeights || { kde: 0.6, historical: 0.3, shadow: 0.1 }
+  };
 
   // ---- KDE for selected API ----
   const [selectedKdeApiId, setSelectedKdeApiId] = useState<string>("");
@@ -213,7 +219,7 @@ export default function StakingProtocol({ apis = [] }: StakingProtocolProps) {
         {[
           { label: "Total Value Bonded", value: fmtUSD(protocolStats.totalValueBonded), icon: Wallet, color: "text-[#FFB800]" },
           { label: "Active APIs", value: String(protocolStats.activeApis), icon: Server, color: "text-cyan-400" },
-          { label: "Active Verifiers", value: String(protocolStats.activeVerifiers), icon: Users, color: "text-violet-400" },
+          { label: "Active Verifiers", value: String(protocolStats.activeVerifiers), icon: Users, color: "text-[#FFB800]" },
           { label: "Settlement Rate", value: `${protocolStats.settlementRate}%`, icon: CheckCircle, color: "text-emerald-400" },
           { label: "Total Penalties", value: fmtUSD(protocolStats.totalPenalties), icon: AlertTriangle, color: "text-rose-400" },
         ].map((stat) => (
@@ -547,7 +553,7 @@ export default function StakingProtocol({ apis = [] }: StakingProtocolProps) {
       {kdeData && (
         <div className="bg-[#0D0D0D] border border-[#1A1A1A] rounded-xl p-5">
           <div className="flex items-center gap-3 mb-4">
-            <Zap className="w-4 h-4 text-violet-400" />
+            <Zap className="w-4 h-4 text-[#FFB800]" />
             <span className="text-sm font-semibold">KDE Consensus — Measurement Distribution</span>
             <select
               value={selectedKdeApiId}
