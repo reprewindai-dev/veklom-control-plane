@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { ShieldCheck, Cpu, Key, RefreshCw, Smartphone } from 'lucide-react';
-import { Player } from '../types';
+import { Player } from './types';
 
 interface MFASectionProps {
   onAuthenticated: (player: Player) => void;

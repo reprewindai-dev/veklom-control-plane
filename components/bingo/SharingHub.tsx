@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { Share2, Sparkles, Check, Twitter, Cpu, Award } from 'lucide-react';
-import { Player } from '../types';
+import { Player } from './types';
 
 interface SharingHubProps {
   player: Player;

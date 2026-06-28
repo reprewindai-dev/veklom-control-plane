@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Cpu, Heart, Eye, RefreshCw, Radio, Sparkles } from 'lucide-react';
-import { BiometricResonance } from '../types';
+import { BiometricResonance } from './types';
 
 interface NeuralInterfaceProps {
   resonance: BiometricResonance;

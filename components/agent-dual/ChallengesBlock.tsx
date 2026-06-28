@@ -1,5 +1,5 @@
 import React from 'react';
-import { DailyChallenge } from '../types';
+import { DailyChallenge } from './types';
 import { Award, CheckCircle2, Lock, Sparkles, Coins, Flame, Cpu, Trophy, ArrowRight } from 'lucide-react';
 
 interface ChallengesBlockProps {

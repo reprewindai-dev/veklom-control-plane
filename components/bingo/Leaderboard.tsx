@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Award, Heart, Cpu, Trophy } from 'lucide-react';
-import { LeaderboardEntry } from '../types';
+import { LeaderboardEntry } from './types';
 
 interface LeaderboardProps {
   entries: LeaderboardEntry[];

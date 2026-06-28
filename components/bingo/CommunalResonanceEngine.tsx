@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Heart, Cpu, Users, Zap, Sparkles, Activity, Flame, ShieldAlert, CheckCircle2 } from 'lucide-react';
-import { BiometricResonance } from '../types';
+import { BiometricResonance } from './types';
 
 interface CommunalResonanceEngineProps {
   playerResonance: BiometricResonance;

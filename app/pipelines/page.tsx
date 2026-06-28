@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import Shell from "@/components/Shell";
 import TierGate from "@/components/TierGate";
+import TriageTelemetry from "@/components/telemetry/TriageTelemetry";
 import { useApi } from "@/hooks/useApi";
 import { api, apiUrl, getToken } from "@/lib/api";
 import { Button, Skeleton, Table } from "@/components/ui";
@@ -651,6 +652,11 @@ export default function PipelinesPage() {
             />
           }
         </SectionCard>
+
+        {/* Pipeline Compilation Telemetry Node */}
+        <div className="mt-4">
+          <TriageTelemetry context="pipelines" />
+        </div>
       </TierGate>
     </Shell>
   );

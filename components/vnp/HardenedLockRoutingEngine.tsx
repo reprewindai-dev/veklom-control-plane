@@ -179,6 +179,14 @@ const getSparklineData = (lock: ActiveLock) => {
 };
 
 export default function App() {
+  const [origin, setOrigin] = useState('https://control.veklom.com');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setOrigin(window.location.origin);
+    }
+  }, []);
+
   // --- STATE ---
   const [isRunning, setIsRunning] = useState<boolean>(true);
   const [contentionLevel, setContentionLevel] = useState<'low' | 'medium' | 'high' | 'extreme'>('medium');
@@ -1143,12 +1151,12 @@ export default function App() {
                       <input 
                         type="text" 
                         readOnly 
-                        value={`${window.location.origin}/api/logs`} 
+                        value={`${origin}/api/logs`} 
                         className="bg-transparent border-0 outline-0 ring-0 text-cyan-300 w-full font-mono text-right text-[10px]"
                       />
                       <button 
                         onClick={() => {
-                          navigator.clipboard.writeText(`${window.location.origin}/api/logs`);
+                          navigator.clipboard.writeText(`${origin}/api/logs`);
                           setCopiedText(true);
                           setTimeout(() => setCopiedText(false), 2000);
                         }}
@@ -1193,7 +1201,7 @@ export default function App() {
     "duration": 15000,
     "message": "Real lock acquired dynamically via cURL shell stub"
   }' \\
-  ${window.location.origin}/api/logs`}</pre>
+  \${origin}/api/logs`}</pre>
                     )}
                     {integrationTab === 'node' && (
                       <pre className="whitespace-pre-wrap">{`// Node.js redis client telemetry middleware
@@ -1201,7 +1209,7 @@ import axios from 'axios';
 
 async function logToDashboard(key, type, latencyMs, clientToken, leaseTimeMs) {
   try {
-    await axios.post('${window.location.origin}/api/logs', {
+    await axios.post('\${origin}/api/logs', {
       key,
       operation: 'EVALSHA',
       type: type, // 'success' | 'failed' | 'expired'
@@ -1226,7 +1234,7 @@ def lock_telemetry(key_name, client_id, lease_ms):
     elapsed_ms = (time.perf_counter() - start) * 1000
 
     try:
-        requests.post('${window.location.origin}/api/logs', json={
+        requests.post('\${origin}/api/logs', json={
             "key": key_name,
             "operation": "EVALSHA",
             "type": "success" if success else "failed",
@@ -1261,16 +1269,16 @@ func LogEvent(key string, latency float64, success bool) {
     }
     
     body, _ := json.Marshal(payload)
-    http.Post("${window.location.origin}/api/logs", "application/json", bytes.NewBuffer(body))
+    http.Post("\${origin}/api/logs", "application/json", bytes.NewBuffer(body))
 }`}</pre>
                     )}
                     <button
                       onClick={() => {
                         let textToCopy = '';
-                        if (integrationTab === 'curl') textToCopy = `curl -X POST -H "Content-Type: application/json" -d '{"key": "lock:payment_charge:115", "operation": "EVALSHA", "type": "success", "latency": 1.45, "clientId": "client:remote_cl_09", "duration": 15000, "message": "Real lock acquired dynamically via cURL shell stub"}' ${window.location.origin}/api/logs`;
-                        else if (integrationTab === 'node') textToCopy = `// Node.js redis client telemetry middleware\nimport axios from 'axios';\n\nasync function logToDashboard(key, type, latencyMs, clientToken, leaseTimeMs) {\n  try {\n    await axios.post('${window.location.origin}/api/logs', {\n      key,\n      operation: 'EVALSHA',\n      type: type,\n      latency: latencyMs,\n      clientId: clientToken,\n      duration: leaseTimeMs,\n      message: \`Node.js redis acquire \\\${type} lock for key \\\${key}\`\n    });\n  } catch (err) {\n    console.debug('Dashboard unreachable:', err.message);\n  }\n}`;
-                        else if (integrationTab === 'python') textToCopy = `# Python Telemetry Hook\nimport requests, time\n\ndef lock_telemetry(key_name, client_id, lease_ms):\n    start = time.perf_counter()\n    success = True\n    elapsed_ms = (time.perf_counter() - start) * 1055\n    try:\n        requests.post('${window.location.origin}/api/logs', json={\n            "key": key_name,\n            "operation": "EVALSHA",\n            "type": "success" if success else "failed",\n            "latency": round(elapsed_ms, 2),\n            "clientId": client_id,\n            "duration": lease_ms,\n            "message": f"Python lock client acquired key {key_name} dynamically."\n        }, timeout=0.5)\n    except Exception:\n        pass`;
-                        else if (integrationTab === 'go') textToCopy = `package main\nimport (\n    "bytes"\n    "encoding/json"\n    "net/http"\n)\nfunc LogEvent(key string, latency float64, success bool) {\n    status := "success"\n    if !success { status = "failed" }\n    payload := map[string]interface{}{\n        "key":       key,\n        "operation": "EVALSHA",\n        "type":      status,\n        "latency":   latency,\n        "message":   "Golang lock client performance callback",\n    }\n    body, _ := json.Marshal(payload)\n    http.Post("${window.location.origin}/api/logs", "application/json", bytes.NewBuffer(body))\n}`;
+                        if (integrationTab === 'curl') textToCopy = `curl -X POST -H "Content-Type: application/json" -d '{"key": "lock:payment_charge:115", "operation": "EVALSHA", "type": "success", "latency": 1.45, "clientId": "client:remote_cl_09", "duration": 15000, "message": "Real lock acquired dynamically via cURL shell stub"}' \${origin}/api/logs`;
+                        else if (integrationTab === 'node') textToCopy = `// Node.js redis client telemetry middleware\nimport axios from 'axios';\n\nasync function logToDashboard(key, type, latencyMs, clientToken, leaseTimeMs) {\n  try {\n    await axios.post('\${origin}/api/logs', {\n      key,\n      operation: 'EVALSHA',\n      type: type,\n      latency: latencyMs,\n      clientId: clientToken,\n      duration: leaseTimeMs,\n      message: \`Node.js redis acquire \\\${type} lock for key \\\${key}\`\n    });\n  } catch (err) {\n    console.debug('Dashboard unreachable:', err.message);\n  }\n}`;
+                        else if (integrationTab === 'python') textToCopy = `# Python Telemetry Hook\nimport requests, time\n\ndef lock_telemetry(key_name, client_id, lease_ms):\n    start = time.perf_counter()\n    success = True\n    elapsed_ms = (time.perf_counter() - start) * 1055\n    try:\n        requests.post('\${origin}/api/logs', json={\n            "key": key_name,\n            "operation": "EVALSHA",\n            "type": "success" if success else "failed",\n            "latency": round(elapsed_ms, 2),\n            "clientId": client_id,\n            "duration": lease_ms,\n            "message": f"Python lock client acquired key {key_name} dynamically."\n        }, timeout=0.5)\n    except Exception:\n        pass`;
+                        else if (integrationTab === 'go') textToCopy = `package main\nimport (\n    "bytes"\n    "encoding/json"\n    "net/http"\n)\nfunc LogEvent(key string, latency float64, success bool) {\n    status := "success"\n    if !success { status = "failed" }\n    payload := map[string]interface{}{\n        "key":       key,\n        "operation": "EVALSHA",\n        "type":      status,\n        "latency":   latency,\n        "message":   "Golang lock client performance callback",\n    }\n    body, _ := json.Marshal(payload)\n    http.Post("\${origin}/api/logs", "application/json", bytes.NewBuffer(body))\n}`;
                         
                         navigator.clipboard.writeText(textToCopy);
                         setCopiedText(true);

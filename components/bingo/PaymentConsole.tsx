@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { Wallet, ShieldAlert, FileSignature, ArrowUpRight, CheckCircle, HelpCircle } from 'lucide-react';
-import { PaymentRequirement } from '../types';
+import { PaymentRequirement } from './types';
 
 interface PaymentConsoleProps {
   walletAddress: string;

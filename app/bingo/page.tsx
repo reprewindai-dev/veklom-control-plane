@@ -73,9 +73,19 @@ export default function App() {
   const [alertType, setAlertType] = useState<'info' | 'success' | 'warn'>('info');
 
   // Legal Waiver Sign-off State
-  const [hasSignedWaiver, setHasSignedWaiver] = useState<boolean>(() => {
-    return localStorage.getItem('bingo2060_waiver_signed') === 'true';
-  });
+  const [hasSignedWaiver, setHasSignedWaiver] = useState<boolean>(false);
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const signed = localStorage.getItem('bingo2060_waiver_signed') === 'true';
+        if (signed) setHasSignedWaiver(true);
+      }
+    } catch (e) {
+      console.warn("localStorage waiver read error:", e);
+    }
+  }, []);
+
   const [waiverSignKey, setWaiverSignKey] = useState<string>('');
   const [isSigningWaiver, setIsSigningWaiver] = useState<boolean>(false);
 

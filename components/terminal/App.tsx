@@ -18,6 +18,7 @@ import GenomeLedgerOnboarding from './components/GenomeLedgerOnboarding';
 import IncidentsSlashing from './components/IncidentsSlashing';
 import { AmphotericRuntimeControl } from './components/AmphotericRuntimeControl';
 import NexusProtocol from './components/NexusProtocol';
+import TriageTelemetry from '@/components/telemetry/TriageTelemetry';
 import { controlStore } from './data/simulation';
 
 export default function App() {
@@ -160,7 +161,14 @@ export default function App() {
             )}
 
             {activeTab === 'terminal' && (
-              <QuantumTerminal />
+              <div className="w-full h-full flex flex-col xl:flex-row overflow-hidden">
+                <div className="flex-grow h-full relative min-w-0">
+                  <QuantumTerminal />
+                </div>
+                <div className="w-full xl:w-96 shrink-0 h-full border-t xl:border-t-0 xl:border-l border-white/5 bg-[#030303]/85 overflow-y-auto">
+                  <TriageTelemetry context="terminal" />
+                </div>
+              </div>
             )}
 
             {activeTab === 'runtime' && (

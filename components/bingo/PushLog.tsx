@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Bell, Shield, CalendarCheck, Zap, AlertTriangle, CheckCircle2 } from 'lucide-react';
-import { Challenge } from '../types';
+import { Challenge } from './types';
 
 interface PushLogProps {
   challenges: Challenge[];

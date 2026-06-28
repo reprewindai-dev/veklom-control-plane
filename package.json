@@ -21,6 +21,7 @@
     "clsx": "2.1.1",
     "ethers": "^6.17.0",
     "eventemitter3": "^5.0.4",
+    "firebase": "^12.15.0",
     "framer-motion": "^12.41.0",
     "lucide-react": "0.408.0",
     "motion": "^12.40.0",

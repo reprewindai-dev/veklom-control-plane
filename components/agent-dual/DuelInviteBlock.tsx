@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { DuelSession, DuelPlayer, WalletState } from '../types';
+import { DuelSession, DuelPlayer, WalletState } from './types';
 import { Users, Copy, Plus, ArrowRight, Zap, CheckCircle2, ShieldAlert, Coins, RefreshCw, LogOut, Swords, Cpu } from 'lucide-react';
 
 interface DuelInviteBlockProps {

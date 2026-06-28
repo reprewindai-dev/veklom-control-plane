@@ -11,6 +11,7 @@ import {
 import { Activity, Cpu, DollarSign, FileCheck2, Gauge, Layers, Sparkles, ShieldCheck, ArrowUpRight, Fingerprint } from "lucide-react";
 import { AuthorityPanel } from "@/components/AuthorityPanel";
 import { ProactiveIntelligence } from "@/components/ProactiveIntelligence";
+import TriageTelemetry from "@/components/telemetry/TriageTelemetry";
 
 
 export default function DashboardPage() {
@@ -249,6 +250,11 @@ export default function DashboardPage() {
         >
           <AuthorityPanel />
         </SectionCard>
+      </div>
+
+      {/* Overview Routing Triage Node */}
+      <div className="mt-4">
+        <TriageTelemetry context="overview" />
       </div>
     </Shell>
   );

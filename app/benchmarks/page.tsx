@@ -18,6 +18,7 @@ import dynamic from "next/dynamic";
 
 import Shell from "@/components/Shell";
 import TierGate from "@/components/TierGate";
+import TriageTelemetry from "@/components/telemetry/TriageTelemetry";
 
 import type { BenchmarkApiEntry } from "@/lib/vnp/types";
 import type { ApiState } from "@/components/vnp/types";
@@ -266,6 +267,7 @@ function BenchmarksPageContent() {
                       blockAnchored={blockAnchored}
                       onRefreshTelemetry={() => mutateLb()}
                     />
+                    <TriageTelemetry context="benchmarks" />
                   </motion.div>
                 )}
 

@@ -164,8 +164,10 @@ export default function App() {
   // Challenges progress state
   const [challenges, setChallenges] = useState<DailyChallenge[]>(() => {
     try {
-      const saved = localStorage.getItem('agent_duel_challenges_v1');
-      if (saved) return JSON.parse(saved);
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('agent_duel_challenges_v1');
+        if (saved) return JSON.parse(saved);
+      }
     } catch (e) {
       console.warn("localStorage challenges read error:", e);
     }
@@ -219,14 +221,16 @@ export default function App() {
     timestamp: string;
   } | null>(() => {
     try {
-      const saved = localStorage.getItem('agent_duel_last_lost_round_v2');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.hand && Array.isArray(parsed.hand.playerPackets)) {
-          return parsed;
-        } else {
-          // Outdated format or invalid, clear it
-          localStorage.removeItem('agent_duel_last_lost_round_v2');
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('agent_duel_last_lost_round_v2');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.hand && Array.isArray(parsed.hand.playerPackets)) {
+            return parsed;
+          } else {
+            // Outdated format or invalid, clear it
+            localStorage.removeItem('agent_duel_last_lost_round_v2');
+          }
         }
       }
     } catch (e) {
