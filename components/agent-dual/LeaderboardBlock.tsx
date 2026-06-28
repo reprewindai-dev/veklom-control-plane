@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { LeaderboardEntry } from './types';
+import { LeaderboardEntry } from '../types';
 import { Trophy, Award, Search, TrendingUp } from 'lucide-react';
 
 interface LeaderboardBlockProps {

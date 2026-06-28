@@ -44,6 +44,7 @@ export const MODULES: ModuleDef[] = [
   // 4.5 🌐 Staking & Ecosystem
   { slug: "benchmarks-staking", label: "Staking Protocol", href: "/benchmarks?tab=staking", group: "ecosystem", minTier: "free", description: "SLA staking markets (pending Nexus Protocol completion).", icon: "BarChart2", sidebar: true },
   { slug: "agent-duel", label: "Agent Dual", href: "/agent-dual", group: "ecosystem", minTier: "free", description: "Multi-agent debate arena running on Base.", icon: "Swords", sidebar: true },
+  { slug: "bingo", label: "BINGO 2060", href: "/bingo", group: "ecosystem", minTier: "free", description: "M2M Galactic Tournament.", icon: "Gamepad2", sidebar: true },
   { slug: "veklom-id", label: "Veklom ID", href: "https://veklom-id.vercel.app", group: "ecosystem", minTier: "free", description: "Decentralized Sovereign Operator Registry.", icon: "Fingerprint", sidebar: true },
   { slug: "benchmarks-discovery", label: "Veklom Discovery", href: "https://veklomdiscovery.vercel.app", group: "ecosystem", minTier: "free", description: "x402 payments, ACP agents, Base MCP wallet, ENS resolution, on-chain reputation ledger.", icon: "Globe2", sidebar: false },
 

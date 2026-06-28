@@ -4,7 +4,7 @@
  */
 
 import { Flame, Star, Wallet, BellRing } from 'lucide-react';
-import { PushNotification } from './types';
+import { PushNotification } from '../types';
 
 interface NotificationCenterProps {
   notifications: PushNotification[];

@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { WalletState } from './types';
+import { WalletState } from '../types';
 import { Wallet, ShieldCheck, Check, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface WalletBlockProps {

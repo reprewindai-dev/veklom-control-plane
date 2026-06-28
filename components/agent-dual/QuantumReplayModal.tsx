@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TelemetryDuelHand, TelemetryPacket, getPacketDetails } from './types';
+import { TelemetryDuelHand, TelemetryPacket, getPacketDetails } from '../types';
 import { 
   Play, 
   Pause, 

@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { EscrowState } from './types';
+import { EscrowState } from '../types';
 import { Shield, Coins, ExternalLink, Flame, Info, CheckCircle2 } from 'lucide-react';
 
 interface FacilitatorBlockProps {
