@@ -62,8 +62,9 @@ function buildSVG(apiName: string, score: number): string {
 
 export async function GET(
   _request: Request,
-  { params }: { params: { apiId: string } }
+  context: any
 ) {
+  const params = await context.params;
   const { apiId } = params;
 
   // Strip .svg extension if present
