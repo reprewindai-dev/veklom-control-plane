@@ -9,6 +9,7 @@ import {
   Network,
   Fingerprint,
   BookOpen,
+  Award,
 } from "lucide-react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/api";
@@ -27,7 +28,8 @@ const BenchmarkPanel = dynamic(() => import("@/components/vnp/BenchmarkPanel"), 
 const PGLIdentityLayer = dynamic(() => import("@/components/vnp/PGLIdentityLayer"), { ssr: false });
 const ConsensusVisualization = dynamic(() => import("@/components/vnp/ConsensusVisualization"), { ssr: false });
 const MethodologyPanel = dynamic(() => import("@/components/vnp/MethodologyPanel"), { ssr: false });
-const StakingProtocol = dynamic(() => import("@/components/vnp/StakingProtocol"), { ssr: false });
+const ProviderIntelPanel = dynamic(() => import("@/components/vnp/ProviderIntelPanel"), { ssr: false });
+const CertifyPanel = dynamic(() => import("@/components/vnp/CertifyPanel"), { ssr: false });
 
 const generateSHA = () =>
   Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
@@ -156,8 +158,8 @@ function M2MTerminal({ apis }: { apis: BenchmarkApiEntry[] }) {
 // ============ Main Page Content ============
 function BenchmarksPageContent() {
   const searchParams = useSearchParams();
-  const initialTab = (searchParams.get("tab") as "trust" | "pgl" | "consensus" | "staking" | "methodology") || "trust";
-  const [activeTab, setActiveTab] = useState<"trust" | "pgl" | "consensus" | "staking" | "methodology">(initialTab);
+  const initialTab = (searchParams.get("tab") as "trust" | "pgl" | "consensus" | "provider" | "certify" | "methodology") || "trust";
+  const [activeTab, setActiveTab] = useState<"trust" | "pgl" | "consensus" | "provider" | "certify" | "methodology">(initialTab);
 
   const { data: lbData, isLoading: lbLoading, mutate: mutateLb } = useSWR<BenchmarkApiEntry[]>(
     "/api/v1/benchmarks/leaderboard",
@@ -227,7 +229,8 @@ function BenchmarksPageContent() {
                   { id: "trust", label: "Trust Node Matrix", icon: Shield },
                   { id: "pgl", label: "PGL Identity Layer", icon: Fingerprint },
                   { id: "consensus", label: "Consensus Vector", icon: Network },
-                  { id: "staking", label: "Staking Protocol", icon: BarChart2 },
+                  { id: "provider", label: "Provider Intel", icon: Cpu },
+                  { id: "certify", label: "Certify & Badges", icon: Award },
                   { id: "methodology", label: "Methodology", icon: BookOpen },
                 ].map((tab) => (
                   <button
@@ -288,14 +291,25 @@ function BenchmarksPageContent() {
                   </motion.div>
                 )}
 
-                {activeTab === "staking" && (
+                {activeTab === "provider" && (
                   <motion.div
-                    key="staking"
+                    key="provider"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                   >
-                    <StakingProtocol apis={apis} />
+                    <ProviderIntelPanel apis={apis} />
+                  </motion.div>
+                )}
+
+                {activeTab === "certify" && (
+                  <motion.div
+                    key="certify"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    <CertifyPanel apis={apis} />
                   </motion.div>
                 )}
 
