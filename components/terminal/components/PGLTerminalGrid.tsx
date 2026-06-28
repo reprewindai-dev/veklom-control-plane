@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 import { PGLAgent } from '../data/pglLoader';
 import { Shield, Fingerprint, Activity, Terminal } from 'lucide-react';

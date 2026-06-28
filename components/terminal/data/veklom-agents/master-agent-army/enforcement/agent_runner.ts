@@ -51,7 +51,6 @@ const veklomTools = {
     execute: async ({ agent_id, update, status }) => {
       const entry = `\n## ${agent_id} Update — ${new Date().toISOString()}\n- ${update}\n- Status: ${status}\n`;
       // In production: SSH and append to PROGRESS.md
-      console.log("PROGRESS.md update:", entry);
       return { appended: true, entry };
     }
   }),
@@ -91,7 +90,6 @@ const veklomTools = {
     }),
     execute: async ({ content, category }) => {
       // In production: call /api/v1/agent-memory/{agent_id}/remember
-      console.log(`Memory stored [${category}]:`, content);
       return { stored: true };
     }
   })
@@ -107,12 +105,9 @@ async function runAgent(agentId: string, task: string) {
   const mission = missionPath ? fs.readFileSync(missionPath, "utf-8") : "";
 
   // Load relevant memories
-  console.log(`🧠 Loading memories for ${agentId}...`);
   // In production: fetch from memory backend
 
   const model = AGENT_MODEL_MAP[agentId] || AGENT_MODEL_MAP["default"];
-  console.log(`🤖 Running ${agentId} on ${model}`);
-  console.log(`📋 Task: ${task}\n`);
 
   const result = client.callModel({
     model,
@@ -126,12 +121,8 @@ async function runAgent(agentId: string, task: string) {
     if (item.type === "message") {
       const text = item.content?.find((c: any) => c.type === "output_text");
       if (text && "text" in text) process.stdout.write(text.text);
-    } else if (item.type === "function_call" && item.status === "completed") {
-      console.log(`\n🔧 Tool: ${item.name}`);
     }
   }
-
-  console.log("\n✅ Agent session complete");
 }
 
 function findMissionFile(agentId: string): string | null {

@@ -25,7 +25,7 @@ export const MODULES: ModuleDef[] = [
   // 3. 🧪 Run & Playground
   { slug: "playground", label: "Playground", href: "/playground", group: "run", minTier: "free", description: "Side-by-side model comparison with Markdown rendering, cost prediction, and circuit breaker status.", icon: "FlaskConical", sidebar: true },
   { slug: "runtime", label: "Runtime Enforcement", href: "/runtime", group: "run", minTier: "free", description: "7-step deterministic execution pipeline with agent builder and cryptographic evidence ledger.", icon: "Terminal", sidebar: true },
-  { slug: "terminal", label: "Swarm Terminal", href: "https://api.veklom.com/terminal", group: "run", minTier: "free", description: "Raw CLI and Swarm Map.", icon: "TerminalSquare", sidebar: true },
+  { slug: "terminal", label: "Swarm Terminal", href: "/terminal", group: "run", minTier: "free", description: "Raw CLI and Swarm Map.", icon: "TerminalSquare", sidebar: true },
   { slug: "deployments", label: "Deployments", href: "/deployments", group: "run", minTier: "pro", description: "BYOS deployment tracking.", icon: "Server", sidebar: false },
   { slug: "routing", label: "Smart Routing", href: "/routing", group: "run", minTier: "pro", description: "Provider routing rules.", icon: "Network", sidebar: false },
   { slug: "autonomous", label: "Autonomous Jobs", href: "/autonomous", group: "run", minTier: "pro", description: "Execute and monitor autonomous runs.", icon: "Bot", sidebar: false },
@@ -43,14 +43,14 @@ export const MODULES: ModuleDef[] = [
 
   // 4.5 🌐 Staking & Ecosystem
   { slug: "benchmarks-staking", label: "Staking Protocol", href: "/benchmarks?tab=staking", group: "ecosystem", minTier: "free", description: "SLA staking markets (pending Nexus Protocol completion).", icon: "BarChart2", sidebar: true },
-  { slug: "agent-duel", label: "Agent Duel", href: "https://veklom-agent-duel.vercel.app", group: "ecosystem", minTier: "free", description: "Multi-agent debate arena running on Base.", icon: "Swords", sidebar: true },
+  { slug: "agent-duel", label: "Agent Dual", href: "/agent-dual", group: "ecosystem", minTier: "free", description: "Multi-agent debate arena running on Base.", icon: "Swords", sidebar: true },
   { slug: "veklom-id", label: "Veklom ID", href: "https://veklom-id.vercel.app", group: "ecosystem", minTier: "free", description: "Decentralized Sovereign Operator Registry.", icon: "Fingerprint", sidebar: true },
   { slug: "benchmarks-discovery", label: "Veklom Discovery", href: "https://veklomdiscovery.vercel.app", group: "ecosystem", minTier: "free", description: "x402 payments, ACP agents, Base MCP wallet, ENS resolution, on-chain reputation ledger.", icon: "Globe2", sidebar: false },
 
 
   // 5. ⚖️ Governance & Security
   { slug: "governance", label: "Governance & Identity", href: "/governance", group: "govern", minTier: "starter", description: "Operator trust score, rank progression, immutable event ledger, and identity verification.", icon: "Scale", sidebar: true },
-  { slug: "command-center", label: "Interlink", href: "https://api.veklom.com/command-center", group: "govern", minTier: "free", description: "cAPI execution proofs and 9-phase ledger.", icon: "ShieldAlert", sidebar: true },
+  { slug: "command-center", label: "Interlink", href: "/interlink", group: "govern", minTier: "free", description: "cAPI execution proofs and 9-phase ledger.", icon: "ShieldAlert", sidebar: true },
   { slug: "audit", label: "Audit Log", href: "/audit", group: "govern", minTier: "pro", description: "Tamper-evident audit trail.", icon: "FileSearch", sidebar: false },
   { slug: "compliance", label: "Compliance", href: "/compliance", group: "govern", minTier: "sovereign", description: "Frameworks and evidence packages.", icon: "ShieldCheck", sidebar: false },
   { slug: "security", label: "Security Center", href: "/security", group: "govern", minTier: "sovereign", description: "Alerts and vault.", icon: "Shield", sidebar: false },
@@ -58,6 +58,7 @@ export const MODULES: ModuleDef[] = [
   { slug: "content-safety", label: "Content Safety", href: "/content-safety", group: "govern", minTier: "pro", description: "Scanning and age-verification.", icon: "ShieldAlert", sidebar: false },
   { slug: "privacy", label: "Privacy Controls", href: "/privacy", group: "govern", minTier: "sovereign", description: "Data residency.", icon: "EyeOff", sidebar: false },
   { slug: "kill-switch", label: "Kill Switch", href: "/kill-switch", group: "govern", minTier: "sovereign", description: "Halt execution.", icon: "PowerOff", sidebar: false },
+  { slug: "fault-matrix", label: "Fault Matrix", href: "/fault-matrix", group: "govern", minTier: "free", description: "Agentic Authority Runtime & Anomaly Detection", icon: "Activity", sidebar: true },
 
   // 6. ⚙️ Workspace
   { slug: "workspace", label: "Workspace Treasury", href: "/workspace", group: "workspace", minTier: "starter", description: "Team, access, API keys, models, billing, and budget controls.", icon: "Settings", sidebar: true },

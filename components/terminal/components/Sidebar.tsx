@@ -1,3 +1,4 @@
+"use client";
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -5,7 +6,28 @@
 
 import React from 'react';
 import { motion } from 'motion/react';
-import { Terminal, Activity, GitCommit, Users, Server, Radio, Database, ShieldAlert } from 'lucide-react';
+import {
+  Terminal,
+  Activity,
+  GitCommit,
+  Users,
+  Server,
+  Radio,
+  Database,
+  ShieldAlert,
+  LayoutGrid,
+  GitBranch,
+  FlaskConical,
+  ShieldCheck,
+  Network,
+  AlertTriangle,
+  Coins,
+  Sword,
+  Fingerprint,
+  Scale,
+  FileLock,
+  Wallet
+} from 'lucide-react';
 
 interface SidebarProps {
   activeTab: string;
@@ -15,17 +37,72 @@ interface SidebarProps {
   agentsCount: number;
 }
 
+interface MenuItem {
+  id: string;
+  name: string;
+  icon: any;
+  isLive?: boolean;
+}
+
+interface MenuSection {
+  title?: string;
+  items: MenuItem[];
+}
+
 export default function Sidebar({ activeTab, setActiveTab, mcpHeartbeat, throughput, agentsCount }: SidebarProps) {
-  const menuItems = [
-    { id: 'overview', name: 'Swarm Map', icon: Server, desc: '105 Node Swarm Active' },
-    { id: 'spine', name: 'Run Spine', icon: GitCommit, desc: 'PGL consensus trails' },
-    { id: 'runs', name: 'Runs Ledger', icon: Terminal, desc: 'Real-time telemetry' },
-    { id: 'committee', name: 'Council Matrix', icon: Users, desc: 'ArbiterOS consensus' },
+  const sections: MenuSection[] = [
+    {
+      items: [
+        { id: 'overview', name: 'Control Node', icon: LayoutGrid, isLive: true },
+        { id: 'terminal', name: 'Swarm Terminal', icon: Terminal, isLive: true },
+      ]
+    },
+    {
+      title: 'BUILD',
+      items: [
+        { id: 'spine', name: 'Pipelines & GPC', icon: GitBranch, isLive: true },
+      ]
+    },
+    {
+      title: 'RUN',
+      items: [
+        { id: 'playground', name: 'Playground', icon: FlaskConical, isLive: true },
+        { id: 'runtime', name: 'Runtime Enforcement', icon: ShieldCheck, isLive: true },
+      ]
+    },
+    {
+      title: 'VEKLOM NEXUS',
+      items: [
+        { id: 'nexus', name: 'Nexus Protocol', icon: Network, isLive: true },
+        { id: 'runs', name: 'Incidents & Slashing', icon: AlertTriangle },
+      ]
+    },
+    {
+      title: 'STAKING & PROTOCOL',
+      items: [
+        { id: 'staking', name: 'Staking Protocol', icon: Coins },
+        { id: 'duel', name: 'Agent Duel', icon: Sword },
+        { id: 'id', name: 'Veklom ID', icon: Fingerprint },
+      ]
+    },
+    {
+      title: 'ZERO-TRUST',
+      items: [
+        { id: 'committee', name: 'Governance & Identity', icon: Scale, isLive: true },
+        { id: 'interlink', name: 'Interlink Console', icon: FileLock },
+      ]
+    },
+    {
+      title: 'TREASURY',
+      items: [
+        { id: 'treasury', name: 'Workspace Treasury', icon: Wallet },
+      ]
+    }
   ];
 
   return (
-    <aside className="w-64 h-full border-r border-[#ffffff0a] bg-void-black flex flex-col justify-between shrink-0 select-none z-30">
-      <div>
+    <aside className="w-64 h-full border-r border-[#ffffff0a] bg-void-black flex flex-col justify-between shrink-0 select-none z-30 overflow-y-auto scrollbar-hide">
+      <div className="pb-8">
         {/* Cinematic Branding */}
         <div className="p-5 border-b border-[#ffffff0a]">
           <div className="flex items-center gap-2.5">
@@ -45,103 +122,60 @@ export default function Sidebar({ activeTab, setActiveTab, mcpHeartbeat, through
         </div>
 
         {/* Navigation Items */}
-        <nav className="p-3.5 space-y-1.5">
-          <div className="px-2.5 mb-2 text-[10px] uppercase font-mono tracking-widest text-white/30">
-            System Operations
-          </div>
-          {menuItems.map((item) => {
-            const IsActive = activeTab === item.id;
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full group relative flex items-center gap-3.5 px-3 py-2.5 rounded-none text-left transition-all duration-300 pointer border border-transparent`}
-                style={{ contentVisibility: 'auto' }}
-              >
-                {/* Framer motion background block */}
-                {IsActive && (
-                  <motion.div
-                    layoutId="activeTabGlow"
-                    className="absolute inset-0 rounded-none bg-white/[0.02] border border-white/5 border-l-2 border-l-electric-cyan"
-                    transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                  />
-                )}
-
-                <Icon className={`w-4 h-4 z-10 transition-colors duration-200 ${IsActive ? 'text-electric-cyan' : 'text-white/40 group-hover:text-white/75'}`} />
-
-                <div className="z-10 flex-grow">
-                  <div className={`text-xs font-medium ${IsActive ? 'text-white font-semibold' : 'text-white/60 group-hover:text-white/90'}`}>
-                    {item.name}
-                  </div>
-                  <div className="text-[9px] font-mono text-white/35 group-hover:text-white/50">{item.desc}</div>
+        <nav className="p-3.5 space-y-6">
+          {sections.map((section, sIdx) => (
+            <div key={sIdx} className="space-y-1">
+              {section.title && (
+                <div className="px-2.5 mb-2 text-[10px] uppercase font-mono tracking-widest text-white/30">
+                  {section.title}
                 </div>
+              )}
+              {section.items.map((item) => {
+                const IsActive = activeTab === item.id;
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`w-full group relative flex items-center gap-3 px-3 py-1.5 rounded-lg text-left transition-all duration-300 pointer border border-transparent ${IsActive ? 'bg-[#b8860b22] border-[#b8860b44]' : 'hover:bg-white/5'}`}
+                  >
+                    {IsActive && (
+                      <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-[#b8860b] rounded-r-full shadow-[0_0_8px_#b8860b]" />
+                    )}
 
-                {IsActive && (
-                  <motion.div
-                    className="w-1.5 h-3 rounded-none bg-electric-cyan shadow-[0_0_8px_#00E5FF] z-10"
-                    layoutId="barGlow"
-                  />
-                )}
-              </button>
-            );
-          })}
+                    <Icon className={`w-4 h-4 z-10 transition-colors duration-200 ${IsActive ? 'text-[#b8860b]' : 'text-white/40 group-hover:text-white/75'}`} />
+
+                    <div className="z-10 flex-grow">
+                      <div className={`text-[11px] font-medium ${IsActive ? 'text-white font-semibold' : 'text-white/60 group-hover:text-white/90'}`}>
+                        {item.name}
+                      </div>
+                    </div>
+
+                    {item.isLive && (
+                      <div className="flex items-center gap-1 text-[8px] font-bold text-matrix-emerald">
+                        <div className="w-1 h-1 rounded-full bg-matrix-emerald animate-pulse" />
+                        LIVE
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </nav>
-
-        {/* Swarm Topology Radar Widget - Relocated to utilize vacant sidebar space */}
-        <div className="mx-4 my-2 p-3.5 bg-white/[0.01] border border-white/5 rounded-none font-mono">
-          <div className="text-white/40 uppercase tracking-widest font-bold text-[9px] mb-2 flex items-center gap-1.5">
-            <Radio className="w-3.5 h-3.5 text-electric-cyan animate-pulse" />
-            <span>SWARM TOPOLOGY RADAR</span>
-          </div>
-          <div className="space-y-1.5 text-[10px] text-white/70">
-            <div className="flex justify-between">
-              <span className="text-white/45">Connected Units:</span>
-              <strong className="text-white font-mono">{agentsCount} Nodes</strong>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/45">Rendering Grid:</span>
-              <span className="text-white">Concentric Orbit</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/45">Synchronicity:</span>
-              <span className="text-[#00FF66]">Consensus v5.2</span>
-            </div>
-          </div>
-          <hr className="my-2.5 border-white/[0.08]" />
-          <div className="flex justify-between text-[8px] text-white/55">
-            <span className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 bg-electric-cyan inline-block shrink-0 rounded-none animate-pulse" />
-              Active
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 bg-white/40 inline-block shrink-0 rounded-none" />
-              Idle
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 bg-red-500 inline-block shrink-0 rounded-none" />
-              Blocked
-            </span>
-          </div>
-          {activeTab === 'overview' && (
-            <div className="mt-2.5 text-[8px] text-white/30 italic leading-snug">
-              *Drag map to pan. Zoom/pinch to recalibrate layout.
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Footer Metrics */}
-      <div className="p-4 border-t border-[#ffffff0a] font-mono bg-void-charcoal/[0.4]">
+      <div className="p-4 border-t border-[#ffffff0a] font-mono bg-void-charcoal/[0.4] sticky bottom-0">
         <div className="space-y-2.5">
           {/* Heartbeat system state */}
           <div className="flex items-center justify-between text-[10px]">
             <span className="text-white/40 flex items-center gap-1 uppercase">
               <Database className="w-3 h-3 text-white/30" /> MCP-IO STATUS:
             </span>
-            <span className={`flex items-center gap-1.5 font-bold ${mcpHeartbeat === 'NORMAL' ? 'text-matrix-emerald' : 'text-laser-red'}`}>
-              <span className={`w-1.5 h-1.5 ${mcpHeartbeat === 'NORMAL' ? 'bg-matrix-emerald animate-fast-pulse' : 'bg-laser-red'} `} />
-              {mcpHeartbeat}
+            <span className={`flex items-center gap-1.5 font-bold ${mcpHeartbeat === 'online' ? 'text-matrix-emerald' : 'text-laser-red'}`}>
+              <span className={`w-1.5 h-1.5 ${mcpHeartbeat === 'online' ? 'bg-matrix-emerald animate-fast-pulse' : 'bg-laser-red'} `} />
+              {mcpHeartbeat.toUpperCase()}
             </span>
           </div>
 
@@ -154,13 +188,6 @@ export default function Sidebar({ activeTab, setActiveTab, mcpHeartbeat, through
           <div className="flex items-center justify-between text-[10px]">
             <span className="text-white/40 uppercase">Consensus Rate:</span>
             <span className="text-white/80 font-bold">99.98%</span>
-          </div>
-
-          <div className="mt-2.5 p-2 rounded-none bg-void-metal/30 border border-white/[0.04] text-[9px] text-white/50 leading-relaxed">
-            <div className="flex items-center gap-1 text-hazard-amber font-semibold mb-0.5 uppercase">
-              <ShieldAlert className="w-2.5 h-2.5" /> ArbiterOS Active
-            </div>
-            Policy enforcement engine secured under SEKED hardware sandbox.
           </div>
         </div>
       </div>

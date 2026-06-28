@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 import { motion } from 'motion/react';
 import { Activity, AlertTriangle, Lock } from 'lucide-react';

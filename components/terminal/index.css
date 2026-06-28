@@ -152,3 +152,108 @@ body {
   outline: none;
 }
 
+/**
+ * Quantum MCP Terminal Styles
+ */
+:root {
+  --bg: #080b0f;
+  --surface: #0d1117;
+  --surface-2: #111820;
+  --surface-3: #151e2b;
+  --border: rgba(99, 179, 237, 0.12);
+  --border-b: rgba(99, 179, 237, 0.30);
+  --text-m: #6b8299;
+  --text-f: #3d5269;
+  --accent-dim: rgba(99, 179, 237, 0.13);
+}
+
+.scanline-fx {
+  position: fixed;
+  top: -100px;
+  left: 0;
+  width: 100%;
+  height: 120px;
+  background: linear-gradient(to bottom, rgba(99,179,237,0), rgba(99,179,237,0.15) 50%, rgba(99,179,237,0));
+  pointer-events: none;
+  z-index: 9998;
+  animation: scanFx 4s linear infinite;
+  opacity: 0.8;
+}
+
+@keyframes scanFx {
+  0% { transform: translateY(0) }
+  100% { transform: translateY(110vh) }
+}
+
+.zeno-strip {
+  height: 42px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.z-lbl {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--text-f);
+  flex-shrink: 0;
+}
+
+.z-wrap {
+  flex: 1;
+  height: 26px;
+  position: relative;
+  overflow: hidden;
+}
+
+canvas#zeno {
+  width: 100%;
+  height: 26px;
+  display: block;
+}
+
+.z-state {
+  font-size: 9px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #56d364;
+  flex-shrink: 0;
+  transition: all .2s;
+  text-shadow: 0 0 5px #56d364;
+}
+
+.z-state.on {
+  color: #e3b341;
+  text-shadow: 0 0 8px #e3b341;
+}
+
+.ln.sys { color: var(--text-f); }
+.ln.pmt { color: #63b3ed; }
+.ln.ok { color: #56d364; }
+.ln.warn { color: #e3b341; }
+.ln.err { color: #f85149; }
+.ln.dim { color: var(--text-m); }
+.ln.pur { color: #bc8cff; }
+.ln.hdr { color: #63b3ed; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 6px; margin-bottom: 3px; }
+.ln.sep { color: var(--text-f); user-select: none; }
+
+/* Custom scrollbar for terminal */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(99, 179, 237, 0.2);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 179, 237, 0.4);
+}
+

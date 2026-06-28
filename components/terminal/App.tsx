@@ -1,11 +1,11 @@
+"use client";
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-"use client";
 
 import React, { useState, useEffect } from 'react';
-import { controlStore } from './data/simulation';
+import { Cpu } from 'lucide-react';
 import { AgentNode, VeklomRun, Delegate, TelemetryTick } from './types';
 import Sidebar from './components/Sidebar';
 import SwarmMap from './components/SwarmMap';
@@ -13,11 +13,16 @@ import RunSpine from './components/RunSpine';
 import CouncilMatrix from './components/CouncilMatrix';
 import DataGrid from './components/DataGrid';
 import LiveTelemetry from './components/LiveTelemetry';
-import { Radio, Flame, Cpu, Gauge, AlertOctagon } from 'lucide-react';
+import QuantumTerminal from './components/QuantumTerminal';
+import GenomeLedgerOnboarding from './components/GenomeLedgerOnboarding';
+import IncidentsSlashing from './components/IncidentsSlashing';
+import { AmphotericRuntimeControl } from './components/AmphotericRuntimeControl';
+import NexusProtocol from './components/NexusProtocol';
+import { controlStore } from './data/simulation';
 
 export default function App() {
   // Primary Navigation State
-  const [activeTab, setActiveTab] = useState<string>('overview');
+  const [activeTab, setActiveTab] = useState<string>('terminal');
 
   // Real-time ticking UTC clock for Geometric Balance theme
   const [currentTime, setCurrentTime] = useState<string>('');
@@ -34,69 +39,48 @@ export default function App() {
   }, []);
 
   // Local Reactive State mirroring our central control simulation store
-  const [agents, setAgents] = useState<AgentNode[]>([]);
-  const [runs, setRuns] = useState<VeklomRun[]>([]);
-  const [delegates, setDelegates] = useState<Delegate[]>([]);
-  const [logs, setLogs] = useState<TelemetryTick[]>([]);
+  const [agents, setAgents] = useState<AgentNode[]>(controlStore.agents);
+  const [runs, setRuns] = useState<VeklomRun[]>(controlStore.runs);
+  const [delegates, setDelegates] = useState<Delegate[]>(controlStore.delegates);
+  const [logs, setLogs] = useState<TelemetryTick[]>(controlStore.logs);
   const [liveMetrics, setLiveMetrics] = useState(controlStore.liveMetrics);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
 
-  // Sync to simulation ticks
+  // Future integration point:
   useEffect(() => {
-    // Initial load
-    setAgents([...controlStore.agents]);
-    setRuns([...controlStore.runs]);
-    setDelegates([...controlStore.delegates]);
-    setLogs([...controlStore.logs]);
-    setLiveMetrics({ ...controlStore.liveMetrics });
-
-    // Trigger the live PGL handshake immediately on boot!
-    controlStore.initializeFromHandshake();
-
-    // Subscribe to periodic simulation dispatch intervals (WebSockets mock)
-    const unsubscribe = controlStore.subscribe(() => {
+    return controlStore.subscribe(() => {
       setAgents([...controlStore.agents]);
       setRuns([...controlStore.runs]);
       setDelegates([...controlStore.delegates]);
       setLogs([...controlStore.logs]);
       setLiveMetrics({ ...controlStore.liveMetrics });
     });
-
-    return () => {
-      unsubscribe();
-    };
   }, []);
 
   // Update a single agent properties (Reboot / Diagnostics actions)
   const handleAgentUpdate = (id: string, updatedFields: Partial<AgentNode>) => {
-    controlStore.agents = controlStore.agents.map(a => {
-      if (a.id === id) {
-        return { ...a, ...updatedFields };
-      }
-      return a;
-    });
-    setAgents([...controlStore.agents]);
+    setAgents(prev => prev.map(a => a.id === id ? { ...a, ...updatedFields } : a));
   };
 
   // Propose standard motion on the Legislative Matrix
   const handleVotePropose = (proposalName: string) => {
-    // In a real integration, this would call the backend's governance API:
-    // await submitProposal(proposalName);
-    
-    // For now, just log the real interaction attempt
-    controlStore.logs.unshift({
+    setLogs(prev => [{
       timestamp: new Date().toISOString(),
       source: 'Council',
       message: `LEGISLATURE: Motion initiated for ${proposalName}. Transmitting to backend for validation.`,
       type: 'warn'
-    });
+    }, ...prev]);
   };
 
   // Handle high priority manual execution injection
   const handleTriggerManualOverride = async (intentText: string, policyText: string) => {
-    const newRun = await controlStore.triggerManualRun(intentText, policyText);
-    setSelectedRunId(newRun.id);
-    setActiveTab('spine'); // Shift view to spine to show live lock progression!
+    // Empty state fallback - just log it for now
+    setLogs(prev => [{
+      timestamp: new Date().toISOString(),
+      source: 'Operator',
+      message: `MANUAL OVERRIDE: ${intentText}`,
+      type: 'warn'
+    }, ...prev]);
   };
 
   return (
@@ -122,10 +106,11 @@ export default function App() {
               }}
               defaultValue="https://api.veklom.com"
             >
-              <option value="https://api.veklom.com" className="bg-black text-white">Backend Core 1 (api.veklom.com)</option>
-              <option value="https://cappo.veklom.com" className="bg-black text-white">Backend Core 2 (cappo-backend)</option>
-              <option value="https://veklom-id-59uw.vercel.app" className="bg-black text-white">Edge Instance 1 (veklom-id)</option>
-              <option value="https://mcpapi.vercel.app" className="bg-black text-white">Edge Instance 2 (mcpapi)</option>
+              <option value="https://api.veklom.com" className="bg-black text-white">Veklom Cloud (api.veklom.com)</option>
+              <option value="http://localhost:8088" className="bg-black text-white">Veklom Local (8088)</option>
+              <option value="http://localhost:8080" className="bg-black text-white">Interlink Rust (8080)</option>
+              <option value="https://cappo.veklom.com" className="bg-black text-white">CAPPO Cloud (cappo-backend)</option>
+              <option value="http://localhost:8001" className="bg-black text-white">CAPPO Local (8001)</option>
             </select>
             <div className="w-px h-3 bg-white/20"></div>
             <span>LATENCY: 4MS</span>
@@ -144,7 +129,8 @@ export default function App() {
           </div>
           <div className="text-xs font-mono tabular-nums text-white/70">{currentTime}</div>
           <div className="ml-4">
-            {/* @ts-ignore - Web Component typing */}
+            {/* eslint-disable-next-line */}
+            {/* @ts-ignore - appkit-button is a Reown Web Component */}
             <appkit-button />
           </div>
         </div>
@@ -156,7 +142,7 @@ export default function App() {
         <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          mcpHeartbeat={liveMetrics?.mcpIOHeartbeat?.toString() || "0"}
+          mcpHeartbeat={liveMetrics.mcpIOHeartbeat}
           throughput={liveMetrics.throughput}
           agentsCount={agents.length}
         />
@@ -173,18 +159,24 @@ export default function App() {
               />
             )}
 
-            {activeTab === 'spine' && (
-              <RunSpine 
-                runs={runs}
-                selectedRunId={selectedRunId}
-                onSelectRun={setSelectedRunId}
-              />
+            {activeTab === 'terminal' && (
+              <QuantumTerminal />
+            )}
+
+            {activeTab === 'runtime' && (
+              <AmphotericRuntimeControl />
             )}
 
             {activeTab === 'runs' && (
-              <DataGrid 
-                runs={runs}
-              />
+              <IncidentsSlashing />
+            )}
+
+            {activeTab === 'nexus' && (
+              <NexusProtocol />
+            )}
+
+            {activeTab === 'id' && (
+              <GenomeLedgerOnboarding />
             )}
 
             {activeTab === 'committee' && (
@@ -193,10 +185,32 @@ export default function App() {
                 onVotePropose={handleVotePropose}
               />
             )}
+
+            {(['playground', 'staking', 'duel', 'discovery', 'treasury'].includes(activeTab)) && (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-[#030303] text-white/20 font-mono gap-4">
+                <div className="w-16 h-16 rounded-full border border-dashed border-white/10 flex items-center justify-center animate-pulse">
+                  <Cpu size={32} />
+                </div>
+                <div className="text-center">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-1">Module Initializing</h3>
+                  <p className="text-[10px] uppercase">Secure connection to {activeTab.toUpperCase()}_NODE pending...</p>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'interlink' && (
+              <div className="w-full h-full bg-[#030303] overflow-hidden">
+                <iframe 
+                  src="https://interlink.veklom.com/ui" 
+                  className="w-full h-full border-0" 
+                  title="Interlink API Console" 
+                />
+              </div>
+            )}
           </div>
 
           {/* 4. Live Telemetry Console Ticker */}
-          <div className="h-48 border-t border-white/[0.05] bg-[#030303] shrink-0 relative z-10 select-none">
+          <div className="h-72 border-t border-white/[0.05] bg-[#030303] shrink-0 relative z-10 select-none">
             <LiveTelemetry
               logs={logs}
               metrics={liveMetrics}

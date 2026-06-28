@@ -48,7 +48,6 @@ export function useLockSound() {
       osc.stop(ctx.currentTime + 0.3);
       clickOsc.stop(ctx.currentTime + 0.06);
     } catch (err) {
-      console.warn('AudioContext failed:', err);
     }
   }, []);
 

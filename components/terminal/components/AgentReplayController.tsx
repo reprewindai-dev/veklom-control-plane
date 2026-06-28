@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from 'react';
 import { PGLAgent } from '../data/pglLoader';
 import { Play, Pause, Square, FastForward, Lock, TerminalSquare, AlertTriangle } from 'lucide-react';
@@ -46,7 +47,7 @@ export default function AgentReplayController({ agent, onClose }: Props) {
           </button>
           <div className="flex flex-col">
             <h1 className="text-2xl font-mono text-[#00E5FF] uppercase font-bold tracking-wider">
-              {agent.agent} - REPLAY CONTROLLER
+              {agent.agent} // REPLAY CONTROLLER
             </h1>
             <div className="flex items-center space-x-2 mt-1">
               <Lock className="w-3 h-3 text-[#00FF66]" />

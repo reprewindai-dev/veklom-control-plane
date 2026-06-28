@@ -17,7 +17,7 @@ const metadata = {
 }
 
 // x402 requires base mainnet
-export const networks: [any, ...any[]] = [base, mainnet]
+export const networks = [base, mainnet]
 
 export const wagmiAdapter = new WagmiAdapter({
   projectId,
