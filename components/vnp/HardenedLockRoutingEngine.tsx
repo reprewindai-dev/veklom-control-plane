@@ -205,7 +205,10 @@ export default function App() {
   }, [activeLocks]);
 
   // Integration & Universal API Mode State
-  const [dataSourceMode, setDataSourceMode] = useState<'api'>('api');
+  const [dataSourceMode, setDataSourceMode] = useState<'api' | 'simulated' | 'pasted'>('api');
+  
+  const resetSimulation = () => {};
+  const forceEvictKey = (key: string) => {};
   const [apiConnectionStatus, setApiConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connected');
   const [integrationTab, setIntegrationTab] = useState<'curl' | 'node' | 'python' | 'go'>('curl');
   const [copiedText, setCopiedText] = useState<boolean>(false);
@@ -219,7 +222,7 @@ export default function App() {
     let isSubscribed = true;
     const fetchApiTelemetry = async () => {
       try {
-        const response = await api.get('/api/v1/locks/logs');
+        const response = await api.get<any>('/api/v1/locks/logs');
         const data = response.data;
         
         if (isSubscribed) {

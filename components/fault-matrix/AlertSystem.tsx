@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AlertChannel, NotificationLog } from '../types';
+import { AlertChannel, NotificationLog } from './types';
 import { Network, Send, ToggleLeft, Globe, Terminal, Settings2, Trash2 } from 'lucide-react';
 
 interface AlertSystemProps {

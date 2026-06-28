@@ -56,6 +56,23 @@ interface LogEntry {
   isRaw?: boolean;
 }
 
+interface ProviderConfig {
+  id: string;
+  name: string;
+  enabled: boolean;
+  baseUrl?: string;
+  apiKey?: string;
+}
+
+type LLMProvider = any;
+
+interface QuantumAgentStatus {
+  id: number;
+  role: string;
+  status: string;
+  progress: number;
+}
+
 interface TelemetryState {
   zenoCycles: number;
   pathsPruned: number;
@@ -403,7 +420,7 @@ export default function QuantumTerminal() {
   const pct = Math.min((tele.zenoCycles/512)*100, 100).toFixed(0);
   const coh = (99.8 - tele.pathsPruned*0.3).toFixed(1);
 
-  const viewVariants = {
+  const viewVariants: any = {
     initial: { opacity: 0, scale: 0.98 },
     animate: { opacity: 1, scale: 1, transition: { duration: 0.2, ease: "easeOut" } },
     exit: { opacity: 0, scale: 0.98, transition: { duration: 0.15, ease: "easeIn" } },
@@ -724,7 +741,7 @@ export default function QuantumTerminal() {
           <div className="engine-view flex flex-col gap-4">
              <div className="flex items-center justify-between text-[11px] bg-[#111820] border border-[#63b3ed1f] rounded-lg p-3">
                 <span className="text-[#6b8299]">Primary Provider: </span>
-                <select className="bg-[#0d1117] text-[#63b3ed] border border-[#63b3ed1f] px-2 py-1 rounded text-[10px] outline-none" value={selectedProvider} onChange={e => setSelectedProvider(e.target.value as LLMProvider)}>
+                <select className="bg-[#0d1117] text-[#63b3ed] border border-[#63b3ed1f] px-2 py-1 rounded text-[10px] outline-none" value={selectedProvider as string} onChange={e => setSelectedProvider(e.target.value as any)}>
                   {providers.map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
@@ -924,7 +941,7 @@ export default function QuantumTerminal() {
               className="view active absolute inset-0 overflow-y-auto p-4"
               id="v-tools"
             >
-           <ToolExecutor />
+           <div className="text-[#3d5269] text-[10px] p-4 text-center">Tools executor module loading...</div>
             </motion.div>
           )}
 

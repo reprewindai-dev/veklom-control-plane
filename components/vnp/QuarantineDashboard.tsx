@@ -22,7 +22,7 @@ export default function QuarantineDashboard() {
   const fetchQuarantined = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/api/v1/capi/quarantine');
+      const res = await api.get<any>('/api/v1/capi/quarantine');
       setIntents(res.data.quarantined || []);
       setError(null);
     } catch (err: any) {

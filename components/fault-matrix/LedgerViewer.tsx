@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LedgerBlock } from '../types';
+import { LedgerBlock } from './types';
 import { ShieldCheck, Search, HelpCircle, AlertOctagon, Terminal, FileCode, CheckCircle2, Bot, X, ExternalLink, Lock, Fingerprint, Activity } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 

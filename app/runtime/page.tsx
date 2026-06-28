@@ -27,8 +27,6 @@ import {
   RbacPanel,
   AiAdvisorPanel,
   NetworkTopologyPanel,
-  LoadTestingPanel,
-  AgentSdkPanel,
   SimulatorPanel
 } from "@/components/vnp";
 import Shell from "@/components/Shell";
@@ -536,7 +534,7 @@ export default function RuntimePage() {
 
                       {activeTab === "k8s" && <K8sAutoscalingPanel />}
 
-                      {activeTab === "loadtest" && <LoadTestingPanel />}
+                      {activeTab === "loadtest" && <div className="p-8 text-center text-slate-400 font-mono text-sm border border-slate-800 rounded-xl bg-slate-900/50">Load Testing Module Offline</div>}
 
                       {activeTab === "spec" && <SpecPanel />}
 
@@ -560,7 +558,7 @@ export default function RuntimePage() {
 
                       {activeTab === "advisor" && <AiAdvisorPanel />}
 
-                      {activeTab === "agentsdk" && <AgentSdkPanel />}
+                      {activeTab === "agentsdk" && <div className="p-8 text-center text-slate-400 font-mono text-sm border border-slate-800 rounded-xl bg-slate-900/50">Agent SDK Module Offline</div>}
                     </motion.div>
                   </AnimatePresence>
                 )}

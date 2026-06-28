@@ -9,12 +9,12 @@ export interface PGLAgent {
 import fallbackRegistry from './veklom-agents/master-agent-army/pgl_registry.json';
 
 // Toggles between live API vs Local Dev Backend based on VITE_ env vars
-// If you want to force local, set VITE_USE_LOCAL_BACKEND=true in .env
-export let API_BASE_URL = import.meta.env.VITE_USE_LOCAL_BACKEND === 'true' 
+// If you want to force local, set NEXT_PUBLIC_USE_LOCAL_BACKEND=true in .env
+export let API_BASE_URL = process.env.NEXT_PUBLIC_USE_LOCAL_BACKEND === 'true' 
   ? 'http://localhost:8000' 
   : 'https://api.veklom.com';
 
-let CAPPO_BASE_URL = import.meta.env.VITE_USE_LOCAL_BACKEND === 'true'
+let CAPPO_BASE_URL = process.env.NEXT_PUBLIC_USE_LOCAL_BACKEND === 'true'
   ? 'http://localhost:8001'
   : 'https://api.cappo.veklom.com';
 

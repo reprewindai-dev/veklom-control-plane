@@ -48,6 +48,7 @@ export interface RequestOpts {
   /** When true, do not attach the Authorization header (used for /auth/login etc.). */
   unauth?: boolean;
   signal?: AbortSignal;
+  headers?: Record<string, string>;
 }
 
 export function apiBaseUrl(): string {
@@ -130,6 +131,18 @@ export async function api<T>(path: string, opts: RequestOpts = {}): Promise<T> {
 function safeJson(t: string) {
   try { return JSON.parse(t); } catch { return t; }
 }
+
+api.get = <T,>(path: string, opts?: RequestOpts) => api<T>(path, { ...opts, method: 'GET' });
+api.post = <T,>(path: string, body?: any, opts?: RequestOpts) => api<T>(path, { 
+  ...opts, 
+  method: 'POST',
+  body: body ? JSON.stringify(body) : undefined,
+  headers: {
+    'Content-Type': 'application/json',
+    ...(opts?.headers || {})
+  }
+});
+api.delete = <T,>(path: string, opts?: RequestOpts) => api<T>(path, { ...opts, method: 'DELETE' });
 
 
 // SWR fetcher

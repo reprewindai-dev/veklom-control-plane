@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GridCell, Agent, FaultMatrixEvent } from '../types';
+import { GridCell, Agent, FaultMatrixEvent } from './types';
 import { Play, RotateCcw, AlertTriangle, Cpu, Layers, ShieldCheck, Zap } from 'lucide-react';
 
 interface GridSimulatorProps {

@@ -46,12 +46,12 @@ export default function QuantumDashboard() {
       // In agent-control-need-pgl, we should ideally use the configured API_BASE_URL
       // For now we keep the paths but they might need proxying or full URLs
       const [telRes, statusRes, healthRes, secRes, layersRes, infraRes] = await Promise.all([
-        fetch('/api/quantum-metrics').catch(() => ({ ok: false })),
-        fetch('/api/status').catch(() => ({ ok: false })),
-        fetch('/api/v1/sys/health').catch(() => ({ ok: false })),
-        fetch('/api/uacp/security').catch(() => ({ ok: false })),
-        fetch('/api/uacp/layers').catch(() => ({ ok: false })),
-        fetch('/api/uacp/infrastructure').catch(() => ({ ok: false }))
+        fetch('/api/quantum-metrics').catch(() => ({ ok: false, json: async () => null } as unknown as Response)),
+        fetch('/api/status').catch(() => ({ ok: false, json: async () => null } as unknown as Response)),
+        fetch('/api/v1/sys/health').catch(() => ({ ok: false, json: async () => null } as unknown as Response)),
+        fetch('/api/uacp/security').catch(() => ({ ok: false, json: async () => null } as unknown as Response)),
+        fetch('/api/uacp/layers').catch(() => ({ ok: false, json: async () => null } as unknown as Response)),
+        fetch('/api/uacp/infrastructure').catch(() => ({ ok: false, json: async () => null } as unknown as Response))
       ]);
       if (telRes.ok) setTelemetry(await telRes.json());
       if (statusRes.ok) setStatusState(await statusRes.json());

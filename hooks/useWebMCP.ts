@@ -35,6 +35,9 @@ export interface ExecutionReceipt {
   anomalies_detected?: number;
   result?: any;
   error?: string;
+  phase?: number;
+  reason?: string;
+  evidence_chain_id?: string;
 }
 
 // ── Global Polyfill ────────────────────────────────────────────────────────

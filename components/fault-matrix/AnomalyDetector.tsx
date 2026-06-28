@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MCPResource, AnomalyLog } from '../types';
+import { MCPResource, AnomalyLog } from './types';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Flame, Database, Radio, Cpu, Bell, CheckCircle2, ChevronRight, Activity } from 'lucide-react';
 

@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 
 // These components use useSWR + browser APIs — must skip SSR or the build explodes
 const InteractiveLandingTerminal = dynamicImport(
-  () => import("@/components/terminal/InteractiveLandingTerminal"),
+  () => import("@/components/terminal/App"),
   { ssr: false, loading: () => <div className="h-64 bg-white/5 rounded-xl animate-pulse" /> }
 );
 const NetworkTopologyPanel = dynamicImport(
