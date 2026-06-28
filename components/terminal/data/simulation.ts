@@ -92,15 +92,75 @@ export class TerminalBackendStore {
   }
 
   public startSimulation() {
-    // It's no longer a simulation, it's a real polling loop
+    // Replaced polling with SSE
     if (this.intervalId) return;
+    this.intervalId = setTimeout(() => {}, 1000000) as any; // mock interval to prevent double init
 
-    // Do an immediate fetch
+    // Initial state fetch
     this.syncWithTerminalState();
     
-    this.intervalId = setInterval(() => {
-      this.syncWithTerminalState();
-    }, 2000);
+    // Start SSE stream
+    this.initSseConnection();
+  }
+
+  private initSseConnection() {
+    if (typeof window === 'undefined') return;
+
+    const connect = () => {
+      console.log("Connecting to Veklom Swarm SSE endpoint...");
+      const source = new EventSource(`${API_BASE_URL}/api/v1/terminal/events`);
+
+      source.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'connection') {
+            console.log(data.message);
+            return;
+          }
+
+          if (data.type === 'log') {
+            this.logs.unshift(data.data);
+            if (this.logs.length > 100) this.logs.pop();
+            this.notify();
+          }
+
+          if (data.type === 'agent_update') {
+            const agent = this.agents.find(a => a.id === data.id);
+            if (agent) {
+              const previousStatus = agent.status;
+              agent.status = data.status;
+              agent.metrics = {
+                ...agent.metrics,
+                ...data.metrics
+              };
+
+              if (previousStatus !== data.status) {
+                const timestamp = new Date(data.timestamp).toISOString().substring(11, 19);
+                agent.telemetryLogs.unshift(
+                  `[${timestamp}] Real-time async transition: ${previousStatus} -> ${data.status}`
+                );
+                if (agent.telemetryLogs.length > 50) {
+                  agent.telemetryLogs.pop();
+                }
+              }
+
+              this.notify();
+            }
+          }
+        } catch (err) {
+          console.error("SSE parse error", err);
+        }
+      };
+
+      source.onerror = (err) => {
+        console.warn("SSE disconnected. Reconnecting in 3s...", err);
+        source.close();
+        setTimeout(connect, 3000);
+      };
+    };
+
+    connect();
   }
 
   public stopSimulation() {
