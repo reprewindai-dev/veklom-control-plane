@@ -19,6 +19,7 @@ import IncidentsSlashing from './components/IncidentsSlashing';
 import { AmphotericRuntimeControl } from './components/AmphotericRuntimeControl';
 import NexusProtocol from './components/NexusProtocol';
 import TriageTelemetry from '@/components/telemetry/TriageTelemetry';
+import VanguardPlayground from './components/VanguardPlayground';
 import { controlStore } from './data/simulation';
 
 export default function App() {
@@ -194,7 +195,11 @@ export default function App() {
               />
             )}
 
-            {(['playground', 'staking', 'duel', 'discovery', 'treasury'].includes(activeTab)) && (
+            {activeTab === 'playground' && (
+              <VanguardPlayground />
+            )}
+
+            {(['staking', 'duel', 'discovery', 'treasury'].includes(activeTab)) && (
               <div className="w-full h-full flex flex-col items-center justify-center bg-[#030303] text-white/20 font-mono gap-4">
                 <div className="w-16 h-16 rounded-full border border-dashed border-white/10 flex items-center justify-center animate-pulse">
                   <Cpu size={32} />
