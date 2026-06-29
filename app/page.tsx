@@ -5,8 +5,6 @@ import dynamicImport from "next/dynamic";
 import { ArrowRight, Shield, Globe, Zap, Server, Activity, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 
-import AssessmentWizard from "@/components/assessment/AssessmentWizard";
-
 // These components use useSWR + browser APIs — must skip SSR or the build explodes
 const InteractiveLandingTerminal = dynamicImport(
   () => import("@/components/terminal/App"),
@@ -81,11 +79,6 @@ export default function Home() {
             <InteractiveLandingTerminal />
           </motion.div>
         </motion.div>
-      </section>
-
-      {/* Qualification & Assessment Section */}
-      <section className="py-16 border-t border-white/5 bg-[#0F0F13]/40 relative overflow-hidden">
-        <AssessmentWizard />
       </section>
 
       {/* VNP Section */}
