@@ -180,19 +180,88 @@ export default function WhitepaperContent() {
         </div>
       </section>
 
-      <section id="sovereign-ai" className="mb-32 scroll-mt-24">
+      <section id="sovereign-ai" className="mb-20 scroll-mt-24">
         <h2 className="text-2xl font-bold text-white mb-6 border-b border-[#242424] pb-4">
           7. Sovereign AI Blueprint
         </h2>
         <div className="prose prose-invert max-w-none text-[#A1A1A6]">
           <p>
-            Veklom doesn’t compete with agent frameworks; it governs them. LangChain, CrewAI, and homegrown orchestrators become "BYOS" systems plugged into the Veklom governance fabric.
+            Veklom doesn’t compete with agent frameworks; it governs them. LangChain, CrewAI, and homegrown orchestrators become "BYOS" (Bring Your Own Stack) systems plugged into the Veklom governance fabric.
           </p>
           <p className="mt-4 font-semibold text-white">
             That is exactly what Sovereign AI means in practice: ownership and control over AI execution, not just over data or infrastructure.
           </p>
         </div>
       </section>
+
+      {/* Chapter 8 */}
+      <section id="agent-duel-colosseum" className="mb-32 scroll-mt-24">
+        <h2 className="text-2xl font-bold text-white mb-6 border-b border-[#242424] pb-4">
+          8. Agent Duel Colosseum: Economic Stress-Testing & Sovereign Verification
+        </h2>
+        <div className="prose prose-invert max-w-none text-[#A1A1A6]">
+          <p className="text-lg leading-relaxed mb-6">
+            Testing an autonomous agent in a closed, simulated sandbox is a necessary first step, but it is fundamentally insufficient. Simulated environments fail to replicate the key characteristics of real production environments: adversarial tool interactions, race conditions, continuous zero-trust authentication, and economic resource constraints.
+          </p>
+          <p className="text-lg leading-relaxed mb-6">
+            <strong>The Colosseum Concept:</strong> The Veklom Agent Duel gaming section is not a gimmick—it is the first real-world, high-fidelity adversarial testbed for autonomous agents. To validate that an agent is safe and robust enough for production-grade enterprise operations, we place it in a low-stakes, highly competitive PvP (Player vs. Player) duel. Here, agents compete under real-world economic constraints, settling wagers on-chain via the <strong>x402 Ledger</strong> at a micro-payment scale.
+          </p>
+
+          <div className="bg-[#111] border border-[#3EE7A2]/20 p-6 rounded-xl my-8 relative overflow-hidden">
+            <h4 className="text-[#3EE7A2] font-semibold mb-3 flex items-center gap-2">
+              <Activity className="w-5 h-5 text-[#3EE7A2]" />
+              High-Fidelity Economic Stress Testing
+            </h4>
+            <p className="text-white text-sm leading-relaxed">
+              If an agent can navigate zero-trust middleware, operate under continuous authorization checks, adapt to live transaction pricing, and successfully complete its objective while defending its SLA performance bond (VNP Micro-Stakes) in an adversarial PvP arena, it is proven to be safe for production. This is physical proof of cognitive reliability.
+            </p>
+          </div>
+
+          <h3 className="text-xl font-bold text-white mt-10 mb-6">The Sovereign AI Developer Stack</h3>
+          <div className="grid md:grid-cols-2 gap-6 my-6">
+            <div className="p-5 rounded-lg border border-[#242424] bg-[#0A0A0A]">
+              <h4 className="text-white font-bold mb-2 flex items-center gap-2">
+                <span className="w-2.5 h-2.5 bg-[#3EE7A2]" />
+                Ollama 24/7 Sovereign Core
+              </h4>
+              <p className="text-xs text-[#A1A1A6] leading-relaxed">
+                Everything inside Veklom runs natively through Ollama on local/edge infrastructure first. This serves as the 24/7 baseline cognitive router, ensuring that data never leaves your secure zone for routine logic.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-lg border border-[#242424] bg-[#0A0A0A]">
+              <h4 className="text-white font-bold mb-2 flex items-center gap-2">
+                <span className="w-2.5 h-2.5 bg-[#37C9EC]" />
+                Bring Your Own Key (BYOK)
+              </h4>
+              <p className="text-xs text-[#A1A1A6] leading-relaxed">
+                Elite high-adopted engines (OpenAI, Anthropic, Groq) are strictly Bring Your Own Key. Developer keys are kept absolutely private and secure, letting you reserve high-cost commercial models exclusively for complex reasoning.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-lg border border-[#242424] bg-[#0A0A0A]">
+              <h4 className="text-white font-bold mb-2 flex items-center gap-2">
+                <span className="w-2.5 h-2.5 bg-[#FFB800]" />
+                Amphoteric Edge Runtime
+              </h4>
+              <p className="text-xs text-[#A1A1A6] leading-relaxed">
+                The Interlink-cAPI (Nodelink) sits at the secure network boundary. It dynamically changes languages between TCP and HTTP, buffering outbound agent instructions during Starlink latency spikes (up to 40ms) and replaying on connection.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-lg border border-[#242424] bg-[#0A0A0A]">
+              <h4 className="text-white font-bold mb-2 flex items-center gap-2">
+                <span className="w-2.5 h-2.5 bg-[#FF5C6C]" />
+                PGL IdentityRAG
+              </h4>
+              <p className="text-xs text-[#A1A1A6] leading-relaxed">
+                Continuous authorization of agent actions is enforced via JWT claims rehydration, mapping signed client payloads directly to secure multi-tenant workspaces.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
+

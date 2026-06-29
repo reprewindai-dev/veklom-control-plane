@@ -13,7 +13,9 @@ export const CHAPTERS = [
   { id: "operational-economic", title: "5. ConvergeOS & x402" },
   { id: "nexus-protocol", title: "6. Nexus Benchmarking" },
   { id: "sovereign-ai", title: "7. Sovereign AI Blueprint" },
+  { id: "agent-duel-colosseum", title: "8. Agent Duel Colosseum" },
 ];
+
 
 export default function DevSidebar() {
   const [activeId, setActiveId] = useState<string>("strategic-imperative");
