@@ -12,7 +12,7 @@ import fallbackRegistry from './veklom-agents/master-agent-army/pgl_registry.jso
 // If you want to force local, set NEXT_PUBLIC_USE_LOCAL_BACKEND=true in .env
 export let API_BASE_URL = process.env.NEXT_PUBLIC_USE_LOCAL_BACKEND === 'true' 
   ? 'http://localhost:8000' 
-  : 'https://api.veklom.com';
+  : ''; // Same origin routing via Next.js server proxy in production
 
 let CAPPO_BASE_URL = process.env.NEXT_PUBLIC_USE_LOCAL_BACKEND === 'true'
   ? 'http://localhost:8001'

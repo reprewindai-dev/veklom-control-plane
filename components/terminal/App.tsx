@@ -25,6 +25,18 @@ import { controlStore } from './data/simulation';
 export default function App() {
   // Primary Navigation State
   const [activeTab, setActiveTab] = useState<string>('terminal');
+  const [isLandingPage, setIsLandingPage] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isLanding = window.location.pathname === "/";
+      setIsLandingPage(isLanding);
+      if (isLanding) {
+        setActiveTab('terminal');
+      }
+    }
+  }, []);
+
 
   // Real-time ticking UTC clock for Geometric Balance theme
   const [currentTime, setCurrentTime] = useState<string>('');
@@ -86,7 +98,8 @@ export default function App() {
   };
 
   return (
-    <div className="w-screen h-screen bg-[#030303] text-white/90 overflow-hidden flex flex-col font-sans border-4 border-[#0A0A0C] relative">
+    <div className={`${isLandingPage ? 'w-full h-[550px] lg:h-[650px] rounded-xl shadow-2xl border border-white/10' : 'w-screen h-screen border-4 border-[#0A0A0C]'} bg-[#030303] text-white/90 overflow-hidden flex flex-col font-sans relative`}>
+
       
       {/* 1. Futuristic Scanline CRT overlay for cinematic feel */}
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-electric-cyan/2 w-full animate-scanline pointer-events-none z-50" />
@@ -120,15 +133,25 @@ export default function App() {
           </div>
         </div>
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <div className="text-[9px] text-white/40 leading-none uppercase">ARBITEROS STATUS</div>
-              <div className="text-[10px] font-mono text-[#00FF66] uppercase">ENFORCING / MODE_01</div>
+          {isLandingPage && (
+            <a 
+              href="/login" 
+              className="px-4 py-1.5 bg-[#FFB800]/10 border border-[#FFB800]/40 hover:bg-[#FFB800]/20 text-[#FFB800] hover:text-white font-mono text-[10px] font-bold uppercase rounded tracking-wider transition-all duration-300 shadow-[0_0_10px_rgba(255,184,0,0.1)] hover:shadow-[0_0_15px_rgba(255,184,0,0.3)] animate-pulse"
+            >
+              [ ACCESS SOVEREIGN CONSOLE ]
+            </a>
+          )}
+          {!isLandingPage && (
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <div className="text-[9px] text-white/40 leading-none uppercase">ARBITEROS STATUS</div>
+                <div className="text-[10px] font-mono text-[#00FF66] uppercase">ENFORCING / MODE_01</div>
+              </div>
+              <div className="w-24 h-1.5 bg-white/10 overflow-hidden">
+                <div className="w-3/4 h-full bg-[#00FF66] shadow-[0_0_4px_#00FF66]"></div>
+              </div>
             </div>
-            <div className="w-24 h-1.5 bg-white/10 overflow-hidden">
-              <div className="w-3/4 h-full bg-[#00FF66] shadow-[0_0_4px_#00FF66]"></div>
-            </div>
-          </div>
+          )}
           <div className="text-xs font-mono tabular-nums text-white/70">{currentTime}</div>
           <div className="ml-4">
             {/* eslint-disable-next-line */}
@@ -136,18 +159,22 @@ export default function App() {
             <appkit-button />
           </div>
         </div>
+
       </header>
 
       {/* Main Content Split Frame */}
       <div className="flex-grow flex overflow-hidden relative">
         {/* 2. Primary Navigation Sidebar */}
-        <Sidebar
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          mcpHeartbeat={liveMetrics.mcpIOHeartbeat}
-          throughput={liveMetrics.throughput}
-          agentsCount={agents.length}
-        />
+        {!isLandingPage && (
+          <Sidebar
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            mcpHeartbeat={liveMetrics.mcpIOHeartbeat}
+            throughput={liveMetrics.throughput}
+            agentsCount={agents.length}
+          />
+        )}
+
 
         {/* 3. Central Application Viewport */}
         <main className="flex-grow flex flex-col justify-between overflow-y-auto overflow-x-hidden relative min-w-0 border-l border-white/5">
@@ -166,9 +193,11 @@ export default function App() {
                 <div className="flex-grow h-full relative min-w-0">
                   <QuantumTerminal />
                 </div>
-                <div className="w-full xl:w-96 shrink-0 h-full border-t xl:border-t-0 xl:border-l border-white/5 bg-[#030303]/85 overflow-y-auto">
-                  <TriageTelemetry context="terminal" />
-                </div>
+                {!isLandingPage && (
+                  <div className="w-full xl:w-96 shrink-0 h-full border-t xl:border-t-0 xl:border-l border-white/5 bg-[#030303]/85 overflow-y-auto">
+                    <TriageTelemetry context="terminal" />
+                  </div>
+                )}
               </div>
             )}
 
@@ -223,13 +252,15 @@ export default function App() {
           </div>
 
           {/* 4. Live Telemetry Console Ticker */}
-          <div className="h-72 border-t border-white/[0.05] bg-[#030303] shrink-0 relative z-10 select-none">
-            <LiveTelemetry
-              logs={logs}
-              metrics={liveMetrics}
-              onTriggerManualOverride={handleTriggerManualOverride}
-            />
-          </div>
+          {!isLandingPage && (
+            <div className="h-72 border-t border-white/[0.05] bg-[#030303] shrink-0 relative z-10 select-none">
+              <LiveTelemetry
+                logs={logs}
+                metrics={liveMetrics}
+                onTriggerManualOverride={handleTriggerManualOverride}
+              />
+            </div>
+          )}
 
         </main>
       </div>

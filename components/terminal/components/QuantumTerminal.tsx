@@ -32,8 +32,10 @@ import { AgentLatencyVisualizer } from './AgentLatencyVisualizer';
 import { ThreatLandscape } from './ThreatLandscape';
 import QuantumDashboard from './QuantumDashboard';
 import { API_BASE_URL } from '../data/pglLoader';
+import { getToken } from '@/lib/api';
 
 type ViewType = 'terminal' | 'mesh' | 'tele' | 'paths' | 'engine' | 'hub' | 'trust' | 'dashboard' | 'tools' | 'climate' | 'security';
+
 type LogType = 'sys' | 'pmt' | 'out' | 'ok' | 'warn' | 'err' | 'error' | 'dim' | 'pur' | 'hdr' | 'sep' | 'custom';
 
 interface SpecPath {
@@ -149,8 +151,14 @@ function ZenoCanvas({ zenoOn, zenoLabel }: { zenoOn: boolean; zenoLabel: string 
 }
 
 export default function QuantumTerminal() {
-  const [activeView, setActiveView] = useState<ViewType>('dashboard');
+  const [activeView, setActiveView] = useState<ViewType>(() => {
+    if (typeof window !== 'undefined' && window.location.pathname === '/') {
+      return 'terminal';
+    }
+    return 'dashboard';
+  });
   const [inputVal, setInputVal] = useState('');
+
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [zenoState, setZenoState] = useState({ on: false, lbl: 'PHASE_LOCKED' });
@@ -237,11 +245,16 @@ export default function QuantumTerminal() {
   useEffect(() => {
     const fetchAgentsAndMetrics = async () => {
       try {
+        const token = getToken();
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
         const [agentsRes, metricsRes, genRes, linRes] = await Promise.all([
-            fetch("/api/agents/task-force"),
-            fetch("/api/uacp/hub/metrics"),
-            fetch("/api/pgl/genome"),
-            fetch("/api/pgl/ledger")
+            fetch("/api/agents/task-force", { headers }),
+            fetch("/api/uacp/hub/metrics", { headers }),
+            fetch("/api/pgl/genome", { headers }),
+            fetch("/api/pgl/ledger", { headers })
         ]);
         if (agentsRes.ok) {
           const data = await agentsRes.json();
@@ -314,9 +327,22 @@ export default function QuantumTerminal() {
     await sleep(300);
 
     try {
-        const opts: RequestInit = { method: cmdInfo.method };
+        const token = getToken();
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const opts: RequestInit = { 
+          method: cmdInfo.method,
+          headers
+        };
+
         if (cmdInfo.method === 'POST') {
-             opts.headers = { 'Content-Type': 'application/json' };
+             opts.headers = { 
+               ...headers,
+               'Content-Type': 'application/json' 
+             };
              opts.body = JSON.stringify({ action: "terminal_invoke", payload: rawArgs });
         }
 
@@ -368,6 +394,37 @@ export default function QuantumTerminal() {
 
     try {
       const lo = raw.toLowerCase();
+      const isLanding = typeof window !== 'undefined' && window.location.pathname === '/';
+      const token = getToken();
+
+      if (isLanding) {
+        const isNavigation = ['login', 'signup', 'exit', 'workspace', 'overview', 'dashboard'].includes(lo.trim());
+        const isSafeCommand = ['health check', 'status', 'telemetry', 'monitoring health', 'help'].some(safe => lo.startsWith(safe));
+        
+        if (isNavigation || (!token && !isSafeCommand)) {
+          pushLog(`[GATEWAY] Intercepting command sequence: "${raw}"`, 'warn');
+          pushLog('[GATEWAY] Secure enclave required. Elevating privileges...', 'sys');
+          await sleep(400);
+          pushLog('[GATEWAY] Claiming secure session...', 'pur');
+          await sleep(500);
+          
+          if (token) {
+            pushLog('[GATEWAY] Active session token detected. Redirecting to sovereign workspace...', 'ok');
+            await sleep(600);
+            window.location.href = '/overview';
+          } else {
+            pushLog('[GATEWAY] Transitioning to secure Veklom login portal...', 'ok');
+            await sleep(600);
+            window.location.href = '/login';
+          }
+          setIsTyping(false);
+          clearInterval(aInterval);
+          setAgentTaskForce(p => p.map(a => ({ ...a, status: 'idle' })));
+          setZenoState({ on: false, lbl: 'PHASE_LOCKED' });
+          return;
+        }
+      }
+
       const mapped = cmdMap.find(c => lo === c.match || lo.startsWith(c.match));
 
       if (mapped) {
@@ -376,7 +433,12 @@ export default function QuantumTerminal() {
          // USE REAL BACKEND ENGINE
          const response = await fetch(`${API_BASE_URL}/api/terminal/shell`, {
            method: 'POST',
-           headers: { 'Content-Type': 'application/json' },
+           headers: token ? {
+             'Content-Type': 'application/json',
+             'Authorization': `Bearer ${token}`
+           } : {
+             'Content-Type': 'application/json'
+           },
            body: JSON.stringify({ command: raw })
          });
 

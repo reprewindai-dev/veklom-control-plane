@@ -22,6 +22,16 @@ const nextConfig = {
   async rewrites() {
     return [
       {
+        // Serve unauthenticated health status from the backend VPS via local proxy
+        source: "/health/",
+        destination: `${BACKEND_URL}/health/`,
+      },
+      {
+        // Serve unauthenticated API status page from the backend VPS via local proxy
+        source: "/status/",
+        destination: `${BACKEND_URL}/status/`,
+      },
+      {
         // PGL ledger calls go to the dedicated ledger service
         source: "/api/v1/ledger/:path*",
         destination: "https://pgl.veklom.com/api/v1/ledger/:path*",
