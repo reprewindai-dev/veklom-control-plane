@@ -19,6 +19,15 @@ const nextConfig = {
   // It must remain empty so the browser uses same-origin /api/* paths.
   // The rewrites() block below proxies those to BACKEND_URL server-side.
   // Setting it to https://api.veklom.com causes CORS errors on authenticated requests.
+  async redirects() {
+    return [
+      {
+        source: "/terrrinal/:path*",
+        destination: "/terminal/:path*",
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return [
       {
