@@ -152,7 +152,7 @@ function ZenoCanvas({ zenoOn, zenoLabel }: { zenoOn: boolean; zenoLabel: string 
 
 export default function QuantumTerminal() {
   const [activeView, setActiveView] = useState<ViewType>(() => {
-    if (typeof window !== 'undefined' && window.location.pathname === '/') {
+    if (typeof window !== 'undefined' && (window.location.pathname.includes('terminal') || window.location.pathname.includes('terrrinal') || window.location.pathname === '/')) {
       return 'terminal';
     }
     return 'dashboard';
