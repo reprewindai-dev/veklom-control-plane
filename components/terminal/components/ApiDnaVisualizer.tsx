@@ -302,3 +302,96 @@ export const ApiDnaVisualizer: React.FC<ApiDnaVisualizerProps> = ({
     </div>
   );
 };
+
+interface MiniDnaVisualizerProps {
+  dimensions: DimensionScore[];
+  score: number;
+}
+
+export const MiniDnaVisualizer: React.FC<MiniDnaVisualizerProps> = ({ dimensions, score }) => {
+  const width = 200;
+  const height = 32;
+  const paddingX = 10;
+  const spacingX = (width - 2 * paddingX) / 9;
+  const centerY = height / 2;
+
+  const rungs = dimensions.map((dim, idx) => {
+    const scoreFactor = dim.score / 100;
+    const angle = (idx * Math.PI / 2.5); // Fixed spiral angle for distinct, consistent shapes
+    const cosVal = Math.cos(angle);
+    const amplitude = 2 + 8 * scoreFactor; // Shrunk/pinched on lower score, fat on high score
+    
+    const x = paddingX + idx * spacingX;
+    const y1 = centerY - amplitude * cosVal;
+    const y2 = centerY + amplitude * cosVal;
+
+    let color = '#8B5CF6'; // Purple for < 90
+    if (dim.score >= 95) color = '#00FF66'; // Green for excellent
+    else if (dim.score >= 90) color = '#00E5FF'; // Cyan for good
+
+    return {
+      x,
+      y1,
+      y2,
+      color,
+    };
+  });
+
+  const leftPath = rungs.map((r, i) => (i === 0 ? 'M' : 'L') + ` ${r.x} ${r.y1}`).join(' ');
+  const rightPath = rungs.map((r, i) => (i === 0 ? 'M' : 'L') + ` ${r.x} ${r.y2}`).join(' ');
+
+  return (
+    <div className="w-full h-8 flex items-center relative overflow-hidden select-none">
+      <svg
+        width="100%"
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="none"
+        className="overflow-visible"
+      >
+        {/* Subtle grid line in the center */}
+        <line x1={0} y1={centerY} x2={width} y2={centerY} stroke="rgba(255,255,255,0.04)" strokeWidth={0.5} strokeDasharray="3 3" />
+
+        {/* Connecting base pairs */}
+        {rungs.map((rung, i) => (
+          <line
+            key={`mini-rung-${i}`}
+            x1={rung.x}
+            y1={rung.y1}
+            x2={rung.x}
+            y2={rung.y2}
+            stroke={rung.color}
+            strokeWidth={0.75}
+            opacity={0.25}
+          />
+        ))}
+
+        {/* Backbone strands */}
+        <path d={leftPath} fill="none" stroke="url(#mini-grad-left)" strokeWidth={1} opacity={0.35} />
+        <path d={rightPath} fill="none" stroke="url(#mini-grad-right)" strokeWidth={1} opacity={0.35} />
+
+        {/* Nodes and center dots */}
+        {rungs.map((rung, i) => (
+          <g key={`mini-dots-${i}`}>
+            <circle cx={rung.x} cy={rung.y1} r={1.2} fill={rung.color} opacity={0.9} />
+            <circle cx={rung.x} cy={rung.y2} r={1.2} fill={rung.color} opacity={0.9} />
+            <circle cx={rung.x} cy={centerY} r={0.6} fill={rung.color} opacity={0.5} />
+          </g>
+        ))}
+
+        <defs>
+          <linearGradient id="mini-grad-left" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#00E5FF" stopOpacity="0.5" />
+            <stop offset="50%" stopColor="#8B5CF6" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#00FF66" stopOpacity="0.5" />
+          </linearGradient>
+          <linearGradient id="mini-grad-right" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.5" />
+            <stop offset="50%" stopColor="#00FF66" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#00E5FF" stopOpacity="0.5" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  );
+};

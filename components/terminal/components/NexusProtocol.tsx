@@ -18,7 +18,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { GenomeDNA } from './GenomeDNA';
-import { ApiDnaVisualizer } from './ApiDnaVisualizer';
+import { ApiDnaVisualizer, MiniDnaVisualizer } from './ApiDnaVisualizer';
 
 interface ProberNode {
   id: string;
@@ -312,11 +312,12 @@ export default function NexusProtocol() {
                         {api.score} {api.grade}
                       </div>
                     </div>
-                    <div className="mt-2.5 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full bg-gradient-to-r ${api.score >= 95 ? 'from-[#00FF66] to-[#00E5FF]' : api.score >= 90 ? 'from-[#00E5FF] to-violet-500' : 'from-hazard-amber to-orange-500'}`}
-                        style={{ width: `${api.score}%` }}
-                      />
+                    <div className="mt-3 flex flex-col gap-1">
+                      <div className="flex justify-between items-center text-[8px] font-mono tracking-widest text-white/30 uppercase">
+                        <span>QUALITY VECTOR SIGNATURE</span>
+                        <span className="text-[#00E5FF]/60">10-D SEQ</span>
+                      </div>
+                      <MiniDnaVisualizer dimensions={api.dimensions} score={api.score} />
                     </div>
                   </button>
                 ))}
