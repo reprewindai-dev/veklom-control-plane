@@ -54,6 +54,7 @@ export default function PipelineCanvas({
   selected,
   setSelected,
   running,
+  activeNodeId,
   onDelete,
 }: {
   nodes: PNode[];
@@ -63,6 +64,7 @@ export default function PipelineCanvas({
   selected: string | null;
   setSelected: (id: string | null) => void;
   running: boolean;
+  activeNodeId?: string | null;
   onDelete?: (id: string) => void;
 }) {
   const boardRef = useRef<HTMLDivElement>(null);
@@ -166,6 +168,7 @@ export default function PipelineCanvas({
         {nodes.map((n) => {
           const color = CAT_COLOR[n.cat] || CAT_COLOR.input;
           const isSel = selected === n.id;
+          const isActive = activeNodeId === n.id;
           const certStatus = n.certification?.status || "real";
           return (
             <div
@@ -174,7 +177,9 @@ export default function PipelineCanvas({
               onPointerDown={(e) => onNodePointerDown(e, n)}
               className={clsx(
                 "group absolute select-none rounded-lg border bg-bg-800 shadow-lg cursor-grab active:cursor-grabbing transition-shadow",
-                isSel ? "border-brand-400 ring-1 ring-brand-400/40" : "border-border-strong hover:border-ink-600"
+                isSel ? "border-brand-400 ring-1 ring-brand-400/40"
+                : isActive ? "border-amber-400 ring-2 ring-amber-400/50 bg-amber-400/10 animate-pulse shadow-amber-950"
+                : "border-border-strong hover:border-ink-600"
               )}
               style={{ left: n.x, top: n.y, width: NODE_W, height: NODE_H }}
             >

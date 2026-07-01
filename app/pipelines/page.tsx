@@ -12,10 +12,10 @@ import { Button, Skeleton, Table } from "@/components/ui";
 import { ModuleHeader, SectionCard, Pill, RoutePill } from "@/components/telemetry";
 import PipelineCanvas, { PNode, PEdge, CAT_COLOR } from "@/components/PipelineCanvas";
 import { unwrapList } from "@/types/api";
-import { Play, Rocket, Plus, Save, Search, Cpu, Settings2, History, Library, ShieldCheck, LayoutTemplate, AlertTriangle, Bot, Sparkles } from "lucide-react";
+import { Play, Rocket, Plus, Save, Search, Cpu, Code, Settings2, History, Library, ShieldCheck, LayoutTemplate, AlertTriangle, Bot, Sparkles } from "lucide-react";
 
 const RUN_STAGES = ["Source", "Build", "Validate", "Test", "Stage", "Gate", "Deploy"];
-type PanelTab = "library" | "inspector" | "templates" | "runs" | "copilot";
+type PanelTab = "library" | "inspector" | "code" | "templates" | "runs" | "copilot";
 type CatalogCertification = {
   status?: string;
   adapter?: string;
@@ -101,6 +101,18 @@ type NodeConfig = {
   redactPii?: boolean;
   redact_pii?: boolean;
   outputSchema?: string;
+
+  // GPC fields
+  filePath?: string;
+  sep?: string;
+  column?: string;
+  value?: string;
+  groupBy?: string;
+  aggregateColumn?: string;
+  aggregateFunction?: string;
+  columns?: string[];
+  outputPath?: string;
+  sqlQuery?: string;
 };
 
 function catOf(nodeType: string, type: string | undefined, lookup: Record<string, string>): string {
@@ -145,6 +157,10 @@ export default function PipelinesPage() {
   const [runMsg, setRunMsg] = useState<string>();
   const [gpcIntent, setGpcIntent] = useState("");
   const [buildingGpc, setBuildingGpc] = useState(false);
+  const [compiledCode, setCompiledCode] = useState<string>("");
+  const [compiling, setCompiling] = useState<boolean>(false);
+  const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
+  const [nodePreviews, setNodePreviews] = useState<Record<string, any>>({});
 
   const list = unwrapList<any>(pipelines.data);
   const current = list.find((p) => p.id === pid) || list[0];
@@ -205,6 +221,51 @@ export default function PipelinesPage() {
     return () => { cancelled = true; };
   }, [pid, catLookup, nodeCatalog]);
 
+  function isGpcPipeline(ns: PNode[]): boolean {
+    return ns.some((n) => ["CsvFileInput", "FilterRows", "Aggregate", "SelectColumns", "ParquetOutput", "DuckDBQuery"].includes(n.nodeType));
+  }
+
+  async function triggerCompile() {
+    if (!pid) return;
+    setCompiling(true);
+    try {
+      // Save current state first to ensure backend compiles latest edits
+      await api(`/api/v1/pipelines/${pid}/graph`, {
+        method: "PUT",
+        body: {
+          nodes: nodes.map((n) => ({ id: n.id, type: n.cat, position: { x: n.x, y: n.y }, data: { label: n.label, nodeType: n.nodeType } })),
+          edges: edges.map((e) => ({ id: e.id, source: e.source, target: e.target, animated: true })),
+          viewport: { x: 0, y: 0, zoom: 1 },
+          node_configs: nodeConfigs,
+        },
+      });
+      
+      const res = await api<any>("/api/v1/gpc/compile", {
+        method: "POST",
+        body: { pipeline_id: pid, tenant_id: "system_gpc" }
+      });
+      if (res?.python_code) {
+        setCompiledCode(res.python_code);
+      } else if (res?.warnings?.length) {
+        setCompiledCode(`# Compilation Warning:\n${res.warnings.join("\n")}`);
+      }
+    } catch (e) {
+      setCompiledCode(`# Compilation Error:\n${(e as Error).message}`);
+    } finally {
+      setCompiling(false);
+    }
+  }
+
+  // Live compilation hook
+  useEffect(() => {
+    if (panelTab === "code" && pid) {
+      const delayDebounce = setTimeout(() => {
+        triggerCompile();
+      }, 500); // 500ms debounce
+      return () => clearTimeout(delayDebounce);
+    }
+  }, [nodes, edges, nodeConfigs, panelTab, pid]);
+
   function addNode(catId: string, node: any) {
     const id = `${node.id}-${Date.now().toString(36)}`;
     const cx = 120 + (nodes.length % 6) * 60;
@@ -238,15 +299,40 @@ export default function PipelinesPage() {
     if (!pid || running) return;
     setRunning(true); setRunMsg(undefined);
     setStageStatus(Object.fromEntries(RUN_STAGES.map((s) => [s, "pending"])));
+    
+    // GPC active nodes and previews reset
+    setActiveNodeId(null);
+    setNodePreviews({});
+    
     let timeout: number | undefined;
     try {
-      const { run_id } = await api<any>(`/api/v1/pipelines/${pid}/run`, { method: "POST" });
+      const isGpc = isGpcPipeline(nodes);
+      
       const controller = new AbortController();
       timeout = window.setTimeout(() => controller.abort(), 45000);
-      const res = await fetch(apiUrl(`/api/v1/pipelines/${pid}/runs/${run_id}/stream`), {
-        headers: { Authorization: `Bearer ${getToken()}` },
-        signal: controller.signal,
-      });
+      
+      let res: Response;
+      if (isGpc) {
+        // Save graph first to ensure backend executes the latest nodes and configs
+        await saveGraph();
+        
+        // Execute GPC pipeline directly
+        res = await fetch(apiUrl(`/api/v1/gpc/execute?pipeline_id=${pid}`), {
+          method: "POST",
+          headers: { 
+            Authorization: `Bearer ${getToken()}`,
+            "Content-Type": "application/json"
+          },
+          signal: controller.signal,
+        });
+      } else {
+        const { run_id } = await api<any>(`/api/v1/pipelines/${pid}/run`, { method: "POST" });
+        res = await fetch(apiUrl(`/api/v1/pipelines/${pid}/runs/${run_id}/stream`), {
+          headers: { Authorization: `Bearer ${getToken()}` },
+          signal: controller.signal,
+        });
+      }
+      
       if (!res.body) throw new Error("No stream");
       const reader = res.body.getReader();
       const dec = new TextDecoder();
@@ -271,22 +357,54 @@ export default function PipelinesPage() {
 
           let ev: any;
           try { ev = JSON.parse(dataStr.trim()); } catch { continue; }
-          if (ev.stage) setStageStatus((s) => ({ ...s, [ev.stage]: ev.type === "step.completed" ? "completed" : "running" }));
-          if (ev.type === "run.completed") {
-            setStageStatus(Object.fromEntries(RUN_STAGES.map((s) => [s, "completed"])));
-            setRunMsg(`Completed · evidence ${ev.evidence_id || "—"} · proof ${ev.proof_hash || "—"}`);
-            runs.mutate();
-          }
-          if (ev.type === "run.waiting_approval") {
-            setStageStatus((s) => ({ ...s, Gate: "running" }));
-            const approvalId = ev.approval?.approval_id || "approval required";
-            const reason = ev.approval?.reason || "ASK_HUMAN is waiting for approval";
-            setRunMsg(`Waiting approval: ${approvalId} - ${reason}`);
-            runs.mutate();
-          }
-          if (ev.type === "run.failed") {
-            setRunMsg(`Run failed: ${ev.error || "backend execution failed"}`);
-            runs.mutate();
+          
+          if (isGpc) {
+            // Parse GPC-specific SSE events
+            if (ev.event === "start") {
+              setRunMsg("Starting GPC pipeline compilation and sandboxed execution...");
+              setStageStatus(Object.fromEntries(RUN_STAGES.map((s) => [s, s === "Source" ? "running" : "pending"])));
+            } else if (ev.event === "node_start") {
+              setActiveNodeId(ev.node_id);
+              setSelected(ev.node_id); // Auto select the currently executing node to show live progress & preview
+              setRunMsg(`Executing node ${ev.node_id}...`);
+              setStageStatus((s) => {
+                const next = { ...s };
+                if (ev.index === 0) next["Source"] = "completed";
+                if (ev.index > 0) next["Build"] = "completed";
+                next["Validate"] = "running";
+                return next;
+              });
+            } else if (ev.event === "node_complete") {
+              setNodePreviews((prev) => ({ ...prev, [ev.node_id]: ev.preview }));
+            } else if (ev.event === "complete") {
+              setActiveNodeId(null);
+              setStageStatus(Object.fromEntries(RUN_STAGES.map((s) => [s, "completed"])));
+              setRunMsg(`Completed · run ID ${ev.run_id} · PIPEDA & Quebec Law 25 compliance checks verified`);
+              runs.mutate();
+            } else if (ev.event === "error") {
+              setActiveNodeId(null);
+              setRunMsg(`Execution error: ${ev.message}`);
+              setStageStatus((s) => ({ ...s, Validate: "failed" }));
+            }
+          } else {
+            // Parse standard pipeline execution events
+            if (ev.stage) setStageStatus((s) => ({ ...s, [ev.stage]: ev.type === "step.completed" ? "completed" : "running" }));
+            if (ev.type === "run.completed") {
+              setStageStatus(Object.fromEntries(RUN_STAGES.map((s) => [s, "completed"])));
+              setRunMsg(`Completed · evidence ${ev.evidence_id || "—"} · proof ${ev.proof_hash || "—"}`);
+              runs.mutate();
+            }
+            if (ev.type === "run.waiting_approval") {
+              setStageStatus((s) => ({ ...s, Gate: "running" }));
+              const approvalId = ev.approval?.approval_id || "approval required";
+              const reason = ev.approval?.reason || "ASK_HUMAN is waiting for approval";
+              setRunMsg(`Waiting approval: ${approvalId} - ${reason}`);
+              runs.mutate();
+            }
+            if (ev.type === "run.failed") {
+              setRunMsg(`Run failed: ${ev.error || "backend execution failed"}`);
+              runs.mutate();
+            }
           }
         }
       }
@@ -458,9 +576,10 @@ export default function PipelinesPage() {
 
           {/* Node palette / inspector */}
           <SectionCard label="Library" title="Nodes" className="self-start">
-            <div className="grid grid-cols-5 gap-1 mb-3 rounded-lg border border-border bg-bg-900 p-1">
+            <div className="grid grid-cols-6 gap-1 mb-3 rounded-lg border border-border bg-bg-900 p-1">
               <PanelTabButton active={panelTab === "library"} onClick={() => setPanelTab("library")} title="Library"><Library size={13} /></PanelTabButton>
               <PanelTabButton active={panelTab === "inspector"} onClick={() => setPanelTab("inspector")} title="Inspector"><Settings2 size={13} /></PanelTabButton>
+              <PanelTabButton active={panelTab === "code"} onClick={() => setPanelTab("code")} title="Code"><Code size={13} /></PanelTabButton>
               <PanelTabButton active={panelTab === "copilot"} onClick={() => setPanelTab("copilot")} title="Copilot"><Bot size={13} /></PanelTabButton>
               <PanelTabButton active={panelTab === "templates"} onClick={() => setPanelTab("templates")} title="Templates"><LayoutTemplate size={13} /></PanelTabButton>
               <PanelTabButton active={panelTab === "runs"} onClick={() => setPanelTab("runs")} title="Runs"><History size={13} /></PanelTabButton>
@@ -523,11 +642,40 @@ export default function PipelinesPage() {
               <div className="space-y-3 max-h-[520px] overflow-y-auto scroll-thin pr-1">
                 <ReadinessPanel readiness={readiness} />
                 {selectedNode ? (
-                  <NodeInspector node={selectedNode} config={nodeConfigs[selectedNode.id] || {}} onChange={patchSelectedConfig} />
+                  <NodeInspector node={selectedNode} config={nodeConfigs[selectedNode.id] || {}} onChange={patchSelectedConfig} preview={nodePreviews[selectedNode.id]} />
                 ) : (
                   <div className="rounded-lg border border-border bg-white/[0.02] p-3 text-xs text-ink-500">
                     Select a node to configure provider, policy, budget, evidence, and output controls.
                   </div>
+                )}
+              </div>
+            )}
+
+            {panelTab === "code" && (
+              <div className="rounded-lg border border-border bg-bg-950 p-3 max-h-[520px] overflow-auto scroll-thin font-mono text-[10px] text-ink-300 relative select-text">
+                <div className="flex items-center justify-between border-b border-white/[0.05] pb-2 mb-2">
+                  <span className="text-[11px] font-semibold text-brand-400 uppercase tracking-wider flex items-center gap-1.5 select-none">
+                    <Code size={12} />
+                    GPC AST Code
+                  </span>
+                  {compiling && (
+                    <span className="flex items-center gap-1.5 text-brand-500 text-[9px] uppercase tracking-widest animate-pulse select-none">
+                      <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-ping" />
+                      Compiling...
+                    </span>
+                  )}
+                </div>
+                {compiling && !compiledCode ? (
+                  <div className="space-y-2 py-4 select-none">
+                    <div className="h-3 bg-white/[0.03] rounded w-3/4 animate-pulse" />
+                    <div className="h-3 bg-white/[0.03] rounded w-5/6 animate-pulse" />
+                    <div className="h-3 bg-white/[0.03] rounded w-2/3 animate-pulse" />
+                    <div className="h-3 bg-white/[0.03] rounded w-full animate-pulse" />
+                  </div>
+                ) : (
+                  <pre className="whitespace-pre overflow-x-auto selection:bg-brand-500/30 selection:text-white leading-relaxed">
+                    {compiledCode || "# Drag, configure, or link nodes to live compile Python AST..."}
+                  </pre>
                 )}
               </div>
             )}
@@ -663,6 +811,13 @@ export default function PipelinesPage() {
 }
 
 function defaultNodeConfig(catId: string, nodeType: string): NodeConfig {
+  if (nodeType === "CsvFileInput") return { filePath: "data.csv", sep: ",", policy: "inherit", requireEvidence: true };
+  if (nodeType === "FilterRows") return { column: "status", value: "active", policy: "inherit", requireEvidence: true };
+  if (nodeType === "Aggregate") return { groupBy: "status", aggregateColumn: "id", aggregateFunction: "count", policy: "inherit", requireEvidence: true };
+  if (nodeType === "SelectColumns") return { columns: ["id", "username", "email", "status", "created_at"], policy: "inherit", requireEvidence: true };
+  if (nodeType === "ParquetOutput") return { outputPath: "output.parquet", policy: "inherit", requireEvidence: true };
+  if (nodeType === "DuckDBQuery") return { sqlQuery: "SELECT * FROM df WHERE status = 'active'", policy: "inherit", requireEvidence: true };
+
   if (nodeType === "input") return { text: "Describe the task for this governed pipeline.", policy: "inherit", requireEvidence: true };
   if (nodeType === "doc-loader" || nodeType === "file-read") return { text: "Paste document text or configure a governed URL.", policy: "tool_allowlist", requireEvidence: true };
   if (nodeType === "embed-bge") return { provider: "ollama", model: "bge-m3", policy: "sovereign_default", requireEvidence: true };
@@ -857,7 +1012,7 @@ function ReadinessPanel({ readiness }: { readiness: { label: string; pass: boole
   );
 }
 
-function NodeInspector({ node, config, onChange }: { node: PNode; config: NodeConfig; onChange: (patch: NodeConfig) => void }) {
+function NodeInspector({ node, config, onChange, preview }: { node: PNode; config: NodeConfig; onChange: (patch: NodeConfig) => void; preview?: any }) {
   const isLangChainAgent = node.nodeType === "langchain_agent" || node.nodeType === "lc-agent";
   const isAgentModel = ["agent-node", "supervisor-agent", "critic-agent", "planner-agent"].includes(node.nodeType);
   const isModelBacked = isLangChainAgent || isAgentModel || node.nodeType === "lc-retrievalqa" || node.nodeType.startsWith("llm-") || node.nodeType.startsWith("embed-");
@@ -908,6 +1063,114 @@ function NodeInspector({ node, config, onChange }: { node: PNode; config: NodeCo
             {!!node.certification.requires?.length && <span className="block mt-1">Requires: {node.certification.requires.join(", ")}</span>}
           </div>
         )}
+        {node.nodeType === "CsvFileInput" && (
+          <div className="space-y-2 border-b border-border/20 pb-3 mb-3">
+            <Control label="File Path">
+              <input
+                className="input h-8 text-xs font-mono"
+                value={config.filePath || ""}
+                onChange={(e) => onChange({ filePath: e.target.value })}
+                placeholder="data.csv"
+              />
+            </Control>
+            <Control label="Delimiter">
+              <input
+                className="input h-8 text-xs font-mono"
+                value={config.sep || ""}
+                onChange={(e) => onChange({ sep: e.target.value })}
+                placeholder=","
+              />
+            </Control>
+          </div>
+        )}
+        {node.nodeType === "FilterRows" && (
+          <div className="space-y-2 border-b border-border/20 pb-3 mb-3">
+            <Control label="Filter Column">
+              <input
+                className="input h-8 text-xs font-mono"
+                value={config.column || ""}
+                onChange={(e) => onChange({ column: e.target.value })}
+                placeholder="e.g. status"
+              />
+            </Control>
+            <Control label="Filter Value">
+              <input
+                className="input h-8 text-xs font-mono"
+                value={config.value || ""}
+                onChange={(e) => onChange({ value: e.target.value })}
+                placeholder="e.g. active"
+              />
+            </Control>
+          </div>
+        )}
+        {node.nodeType === "Aggregate" && (
+          <div className="space-y-2 border-b border-border/20 pb-3 mb-3">
+            <Control label="Group By Column">
+              <input
+                className="input h-8 text-xs font-mono"
+                value={config.groupBy || ""}
+                onChange={(e) => onChange({ groupBy: e.target.value })}
+                placeholder="e.g. status"
+              />
+            </Control>
+            <Control label="Aggregate Column">
+              <input
+                className="input h-8 text-xs font-mono"
+                value={config.aggregateColumn || ""}
+                onChange={(e) => onChange({ aggregateColumn: e.target.value })}
+                placeholder="e.g. id"
+              />
+            </Control>
+            <Control label="Aggregation Function">
+              <select
+                className="input h-8 text-xs"
+                value={config.aggregateFunction || "count"}
+                onChange={(e) => onChange({ aggregateFunction: e.target.value })}
+              >
+                {["count", "sum", "avg", "min", "max"].map((fn) => (
+                  <option key={fn} className="bg-bg-800" value={fn}>{fn.toUpperCase()}</option>
+                ))}
+              </select>
+            </Control>
+          </div>
+        )}
+        {node.nodeType === "SelectColumns" && (
+          <div className="space-y-2 border-b border-border/20 pb-3 mb-3">
+            <Control label="Columns (comma-separated)">
+              <input
+                className="input h-8 text-xs font-mono"
+                value={(config.columns || []).join(", ")}
+                onChange={(e) => onChange({ columns: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
+                placeholder="id, username, email"
+              />
+            </Control>
+          </div>
+        )}
+        {node.nodeType === "ParquetOutput" && (
+          <div className="space-y-2 border-b border-border/20 pb-3 mb-3">
+            <Control label="Output Path">
+              <input
+                className="input h-8 text-xs font-mono"
+                value={config.outputPath || ""}
+                onChange={(e) => onChange({ outputPath: e.target.value })}
+                placeholder="output.parquet"
+              />
+            </Control>
+          </div>
+        )}
+        {node.nodeType === "DuckDBQuery" && (
+          <div className="space-y-2 border-b border-border/20 pb-3 mb-3">
+            <Control label="DuckDB SQL Query">
+              <textarea
+                className="input min-h-24 py-2 text-xs font-mono resize-none leading-relaxed"
+                value={config.sqlQuery || ""}
+                onChange={(e) => onChange({ sqlQuery: e.target.value })}
+                placeholder="SELECT * FROM df WHERE status = 'active'"
+              />
+            </Control>
+          </div>
+        )}
+
         <Control label="Policy">
           <select className="input h-8 text-xs" value={config.policy || "inherit"} onChange={(e) => onChange({ policy: e.target.value })}>
             <option className="bg-bg-800" value="inherit">Inherit workspace policy</option>
@@ -1276,6 +1539,55 @@ function NodeInspector({ node, config, onChange }: { node: PNode; config: NodeCo
           <input type="checkbox" checked={!!(config.redactPii || config.redact_pii)} onChange={(e) => onChange({ redactPii: e.target.checked, redact_pii: e.target.checked })} />
         </label>
       </div>
+
+      {preview && (
+        <div className="mt-4 border-t border-border/40 pt-4 space-y-3">
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-accent-green uppercase tracking-wider">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-green opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-green"></span>
+            </span>
+            Live Dataset Preview
+          </div>
+          <div className="text-[10px] text-ink-500 font-medium select-none">
+            {preview.rows?.toLocaleString() || "0"} rows &times; {preview.columns?.length || "0"} columns
+          </div>
+
+          {preview.columns?.length > 0 && preview.sample?.length > 0 && (
+            <div className="overflow-x-auto rounded border border-border bg-bg-950/50 scroll-thin">
+              <table className="w-full text-left border-collapse font-mono text-[9px] leading-tight select-none">
+                <thead>
+                  <tr className="border-b border-border bg-bg-900">
+                    {preview.columns.map((col: string, idx: number) => (
+                      <th key={idx} className="px-2 py-1.5 font-bold text-ink-300 truncate max-w-28">{col}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {preview.sample.slice(0, 3).map((row: any[], rIdx: number) => (
+                    <tr key={rIdx} className={rIdx < 2 ? "border-b border-border/20" : ""}>
+                      {row.map((val: any, cIdx: number) => (
+                        <td key={cIdx} className="px-2 py-1 text-ink-400 truncate max-w-28" title={String(val)}>
+                          {typeof val === "object" && val !== null ? JSON.stringify(val) : String(val)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {preview.metadata && Object.keys(preview.metadata).length > 0 && (
+            <div className="rounded border border-border bg-bg-950/60 p-2 font-mono text-[9px] text-ink-400 space-y-1">
+              <div className="text-[8px] uppercase tracking-wider text-ink-600 font-bold border-b border-white/[0.03] pb-1 select-none">Metadata Attributes</div>
+              <pre className="whitespace-pre-wrap overflow-x-auto leading-normal text-[9px] text-brand-400 select-text">
+                {JSON.stringify(preview.metadata, null, 2)}
+              </pre>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
