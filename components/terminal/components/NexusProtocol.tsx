@@ -18,6 +18,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { GenomeDNA } from './GenomeDNA';
+import { ApiDnaVisualizer } from './ApiDnaVisualizer';
 
 interface ProberNode {
   id: string;
@@ -58,6 +59,7 @@ export default function NexusProtocol() {
   const [lastAnchorTime, setLastAnchorTime] = useState<string>('4m ago');
   const [isAttesting, setIsAttesting] = useState(true);
   const [genome, setGenome] = useState<any>(null);
+  const [hoveredDimIndex, setHoveredDimIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchGenome = async () => {
@@ -352,26 +354,50 @@ export default function NexusProtocol() {
 
                 {/* 10-Dimensional Vector Breakdown */}
                 <div>
-                  <div className="text-[10px] font-mono tracking-wider text-white/30 uppercase mb-3">10-DIMENSIONAL QUALITY VECTOR SPECIFICATION</div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                    {selectedApi.dimensions.map((dim, idx) => (
-                      <div key={idx} className="p-3 bg-black/40 border border-white/5 rounded-lg flex flex-col gap-1.5">
-                        <div className="flex justify-between items-center text-[11px]">
-                          <span className="font-semibold text-white/80">{dim.name}</span>
-                          <span className="font-mono text-[#00E5FF] font-bold">{dim.score} / 100</span>
-                        </div>
-                        <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                  <div className="text-[10px] font-mono tracking-wider text-white/30 uppercase mb-4">10-DIMENSIONAL QUALITY VECTOR SPECIFICATION</div>
+                  
+                  <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 items-stretch">
+                    {/* DNA Helix Map column */}
+                    <div className="xl:col-span-2">
+                      <ApiDnaVisualizer
+                        dimensions={selectedApi.dimensions}
+                        apiName={selectedApi.name}
+                        apiScore={selectedApi.score}
+                        apiGrade={selectedApi.grade}
+                        hoveredIndex={hoveredDimIndex}
+                        setHoveredIndex={setHoveredDimIndex}
+                      />
+                    </div>
+
+                    {/* Progress bars specification column */}
+                    <div className="xl:col-span-3 flex flex-col gap-3">
+                      {selectedApi.dimensions.map((dim, idx) => {
+                        const isHovered = hoveredDimIndex === idx;
+                        return (
                           <div 
-                            className="h-full bg-gradient-to-r from-violet-500 to-[#00E5FF]"
-                            style={{ width: `${dim.score}%` }}
-                          />
-                        </div>
-                        <div className="flex justify-between items-center text-[8.5px] text-white/40 font-mono">
-                          <span>{dim.desc}</span>
-                          <span>WEIGHT: {dim.weight}%</span>
-                        </div>
-                      </div>
-                    ))}
+                            key={idx} 
+                            onMouseEnter={() => setHoveredDimIndex(idx)}
+                            onMouseLeave={() => setHoveredDimIndex(null)}
+                            className={`p-3 rounded-lg flex flex-col gap-1.5 transition-all duration-200 border ${isHovered ? 'bg-[#00E5FF]/5 border-[#00E5FF]/30 shadow-[0_0_12px_rgba(0,229,255,0.05)] scale-[1.01]' : 'bg-black/40 border-white/5'}`}
+                          >
+                            <div className="flex justify-between items-center text-[11px]">
+                              <span className={`font-semibold transition-colors duration-200 ${isHovered ? 'text-white' : 'text-white/80'}`}>{dim.name}</span>
+                              <span className="font-mono text-[#00E5FF] font-bold">{dim.score} / 100</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full bg-gradient-to-r transition-all duration-300 ${isHovered ? 'from-[#00E5FF] to-[#00FF66]' : 'from-violet-500 to-[#00E5FF]'}`}
+                                style={{ width: `${dim.score}%` }}
+                              />
+                            </div>
+                            <div className="flex justify-between items-center text-[8.5px] text-white/40 font-mono">
+                              <span>{dim.desc}</span>
+                              <span>WEIGHT: {dim.weight}%</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
