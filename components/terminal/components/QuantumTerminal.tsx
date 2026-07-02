@@ -151,6 +151,7 @@ function ZenoCanvas({ zenoOn, zenoLabel }: { zenoOn: boolean; zenoLabel: string 
 }
 
 export default function QuantumTerminal() {
+  const isLanding = typeof window !== 'undefined' && window.location.pathname === '/';
   const [activeView, setActiveView] = useState<ViewType>(() => {
     if (typeof window !== 'undefined' && (window.location.pathname.includes('terminal') || window.location.pathname.includes('terrrinal') || window.location.pathname === '/')) {
       return 'terminal';
@@ -399,9 +400,8 @@ export default function QuantumTerminal() {
 
       if (isLanding) {
         const isNavigation = ['login', 'signup', 'exit', 'workspace', 'overview', 'dashboard'].includes(lo.trim());
-        const isSafeCommand = ['health check', 'status', 'telemetry', 'monitoring health', 'help', 'veklom'].some(safe => lo.startsWith(safe));
         
-        if (isNavigation || (!token && !isSafeCommand)) {
+        if (isNavigation) {
           pushLog(`[GATEWAY] Intercepting command sequence: "${raw}"`, 'warn');
           pushLog('[GATEWAY] Secure enclave required. Elevating privileges...', 'sys');
           await sleep(400);
@@ -1048,19 +1048,21 @@ export default function QuantumTerminal() {
       </div>
 
       {/* Bottom Nav */}
-      <div className="bnav flex bg-[#0d1117] border-t border-[#63b3ed1f] shrink-0 overflow-x-auto scrollbar-hide">
-        <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'terminal' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('terminal')}>Terminal</div>
-        <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'mesh' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('mesh')}>Mesh</div>
-        <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'tele' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('tele')}>Telemetry</div>
-        <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'paths' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('paths')}>Paths</div>
-        <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'engine' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('engine')}>Engine</div>
-        <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'hub' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('hub')}>Hub</div>
-        <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'trust' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('trust')}>Trust</div>
-        <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'dashboard' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('dashboard')}>Dashboard</div>
-        <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'tools' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('tools')}>Tools</div>
-        <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'climate' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('climate')}>Climate</div>
-        <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'security' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('security')}>Security</div>
-      </div>
+      {!isLanding && (
+        <div className="bnav flex bg-[#0d1117] border-t border-[#63b3ed1f] shrink-0 overflow-x-auto scrollbar-hide">
+          <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'terminal' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('terminal')}>Terminal</div>
+          <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'mesh' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('mesh')}>Mesh</div>
+          <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'tele' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('tele')}>Telemetry</div>
+          <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'paths' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('paths')}>Paths</div>
+          <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'engine' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('engine')}>Engine</div>
+          <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'hub' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('hub')}>Hub</div>
+          <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'trust' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('trust')}>Trust</div>
+          <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'dashboard' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('dashboard')}>Dashboard</div>
+          <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'tools' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('tools')}>Tools</div>
+          <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'climate' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('climate')}>Climate</div>
+          <div className={`bt flex-grow flex flex-col items-center justify-center p-2 text-[8px] uppercase tracking-widest cursor-pointer ${activeView === 'security' ? 'text-[#63b3ed]' : 'text-[#3d5269]'}`} onClick={() => setActiveView('security')}>Security</div>
+        </div>
+      )}
     </div>
   );
 }

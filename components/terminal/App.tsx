@@ -14,6 +14,7 @@ import CouncilMatrix from './components/CouncilMatrix';
 import DataGrid from './components/DataGrid';
 import LiveTelemetry from './components/LiveTelemetry';
 import QuantumTerminal from './components/QuantumTerminal';
+import QuantumDashboard from './components/QuantumDashboard';
 import GenomeLedgerOnboarding from './components/GenomeLedgerOnboarding';
 import IncidentsSlashing from './components/IncidentsSlashing';
 import { AmphotericRuntimeControl } from './components/AmphotericRuntimeControl';
@@ -92,8 +93,21 @@ export default function App({ defaultTab = 'overview' }: TerminalAppProps) {
     await controlStore.triggerManualRun(intentText, policyText);
   };
 
+
+  if (isLandingPage) {
+    return (
+      <div className="w-full h-[550px] lg:h-[650px] rounded-xl shadow-2xl border border-white/10 overflow-hidden relative bg-[#030303] text-white/90 font-sans">
+        {/* Futuristic Scanline CRT overlay for cinematic feel */}
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-electric-cyan/2 w-full animate-scanline pointer-events-none z-50" />
+        <div className="w-full h-full relative">
+          <QuantumTerminal />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`${isLandingPage ? 'w-full h-[550px] lg:h-[650px] rounded-xl shadow-2xl border border-white/10' : 'w-screen h-screen border-4 border-[#0A0A0C]'} bg-[#030303] text-white/90 overflow-hidden flex flex-col font-sans relative`}>
+    <div className="w-screen h-screen border-4 border-[#0A0A0C] bg-[#030303] text-white/90 overflow-hidden flex flex-col font-sans relative">
 
       
       {/* 1. Futuristic Scanline CRT overlay for cinematic feel */}
@@ -175,6 +189,9 @@ export default function App({ defaultTab = 'overview' }: TerminalAppProps) {
           {/* VIEW CONTAINER */}
           <div className="flex-grow overflow-y-auto overflow-x-hidden relative bg-[#030303]">
             {activeTab === 'overview' && (
+              <QuantumDashboard />
+            )}
+            {activeTab === 'swarm-map' && (
               <SwarmMap 
                 agents={agents} 
                 onAgentUpdate={handleAgentUpdate}
@@ -251,7 +268,7 @@ export default function App({ defaultTab = 'overview' }: TerminalAppProps) {
           </div>
 
           {/* 4. Live Telemetry Console Ticker */}
-          {!isLandingPage && ['overview', 'terminal'].includes(activeTab) && (
+          {!isLandingPage && ['overview', 'swarm-map', 'terminal'].includes(activeTab) && (
             <div className="h-72 border-t border-white/[0.05] bg-[#030303] shrink-0 relative z-10 select-none">
               <LiveTelemetry
                 logs={logs}

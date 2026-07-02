@@ -26,7 +26,8 @@ import {
   Fingerprint,
   Scale,
   FileLock,
-  Wallet
+  Wallet,
+  Map
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -54,6 +55,7 @@ export default function Sidebar({ activeTab, setActiveTab, mcpHeartbeat, through
     {
       items: [
         { id: 'overview', name: 'Control Node', icon: LayoutGrid, isLive: true },
+        { id: 'swarm-map', name: 'Swarm Map', icon: Map, isLive: true },
         { id: 'terminal', name: 'Swarm Terminal', icon: Terminal, isLive: true },
       ]
     },

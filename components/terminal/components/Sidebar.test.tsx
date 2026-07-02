@@ -21,21 +21,18 @@ describe('Sidebar Component', () => {
     // Check if Swarm Map is present (menu item)
     expect(screen.getByText('Swarm Map')).toBeInTheDocument();
 
-    // Check if agents count is present
-    expect(screen.getByText('105 Nodes')).toBeInTheDocument();
+    // Check if Control Node is present (menu item)
+    expect(screen.getByText('Control Node')).toBeInTheDocument();
 
-    // Check if heartbeat is present
-    expect(screen.getByText('NORMAL')).toBeInTheDocument();
-
-    // Check if throughput is present
-    expect(screen.getByText('125 KB/S')).toBeInTheDocument();
+    // Check if Swarm Terminal is present (menu item)
+    expect(screen.getByText('Swarm Terminal')).toBeInTheDocument();
   });
 
   it('calls setActiveTab when a tab is clicked', () => {
     render(<Sidebar {...defaultProps} />);
 
-    const runsLedgerTab = screen.getByRole('button', { name: /Runs Ledger/i });
-    fireEvent.click(runsLedgerTab);
+    const incidentsTab = screen.getByRole('button', { name: /Incidents & Slashing/i });
+    fireEvent.click(incidentsTab);
 
     expect(defaultProps.setActiveTab).toHaveBeenCalledWith('runs');
   });
@@ -43,7 +40,7 @@ describe('Sidebar Component', () => {
   it('displays the correct heartbeat color based on status', () => {
     const { rerender } = render(<Sidebar {...defaultProps} />);
 
-    let heartbeatText = screen.getByText('NORMAL');
+    let heartbeatText = screen.getByText('ONLINE');
     expect(heartbeatText).toHaveClass('text-matrix-emerald');
 
     rerender(<Sidebar {...defaultProps} mcpHeartbeat="ERROR" />);
@@ -55,16 +52,14 @@ describe('Sidebar Component', () => {
   it('highlights the active tab', () => {
     const { rerender } = render(<Sidebar {...defaultProps} />);
 
-    // Overview is default activeTab
-    const overviewTab = screen.getByRole('button', { name: /Swarm Map/i });
-    // It should have the text rendered with specific class indicating active state.
-    // The inner text container has a different class based on active status.
-    const overviewTextContainer = overviewTab.querySelector('div.flex-grow > div.text-xs');
-    expect(overviewTextContainer).toHaveClass('text-white', 'font-semibold');
+    // Control Node is default activeTab ('overview')
+    const controlNodeTab = screen.getByRole('button', { name: /Control Node/i });
+    const controlNodeTextContainer = controlNodeTab.querySelector('div.flex-grow > div');
+    expect(controlNodeTextContainer).toHaveClass('text-white', 'font-semibold');
 
-    // Run Spine is not active
-    const runSpineTab = screen.getByRole('button', { name: /Run Spine/i });
-    const runSpineTextContainer = runSpineTab.querySelector('div.flex-grow > div.text-xs');
-    expect(runSpineTextContainer).toHaveClass('text-white/60');
+    // Pipelines & GPC is not active ('spine')
+    const pipelinesTab = screen.getByRole('button', { name: /Pipelines & GPC/i });
+    const pipelinesTextContainer = pipelinesTab.querySelector('div.flex-grow > div');
+    expect(pipelinesTextContainer).toHaveClass('text-white/60');
   });
 });

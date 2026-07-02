@@ -33,6 +33,10 @@ export const modal = createAppKit({
   projectId,
   metadata,
   features: {
-    analytics: true
-  }
+    analytics: true,
+    email: true, // Enable email login
+    socials: ['google', 'x', 'discord', 'github', 'apple'], // Enable socials
+    emailShowWallets: true, // Show standard wallets below email input
+  },
+  allWallets: 'SHOW' // Unshackle search to support 150+ wallets without infinite loops
 })
